@@ -3,12 +3,12 @@
 from flask import Flask
 
 def create_app():
+    """
+    Flask 애플리케이션을 생성하고 설정하는 함수
+    """
     app = Flask(__name__)
-    
-    # Config 파일 불러오기 (optional)
-    app.config.from_pyfile('../instance/config.py', silent=True)
 
-    # 블루프린트 등록 (라우트 연결)
+    # Blueprint 등록
     from .routes import main
     app.register_blueprint(main)
 
