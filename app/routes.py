@@ -3,39 +3,11 @@
 # app/routes.py
 
 from flask import Blueprint, jsonify, request
-from skyfield.api import load, Topos, N, E, load_constellation_map, position_of_radec
-from skyfield.positionlib import ICRF
 from datetime import datetime, timedelta
-from functools import lru_cache
+from .services.constellation_service import get_constellation_for_date
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
-
-# Skyfield에서 사용할 타임스케일 및 행성 데이터 로드
-ts = load.timescale()
-planets = load('de421.bsp')  # 행성 데이터 로드 (de421.bsp 파일 필요)
-earth = planets['earth']  # 지구 객체 생성
-
-# 별자리 데이터 로드
-constellation_map = load_constellation_map()
-
-# 간단한 캐시 구현 예시
-@lru_cache(maxsize=128)
-def get_constellation_for_date(latitude, longitude, year, month, day):
-    """
-    주어진 날짜와 위치(위도, 경도)에서의 별자리 정보를 반환하는 함수
-    캐싱을 사용하여 최대 128개의 계산 결과를 저장해 성능 향상
-    """
-    t = ts.utc(year, month, day)  # 해당 날짜의 시간 객체 생성
-    location = Topos(latitude * N, longitude * E)  # 위치 객체 생성
-    observer = earth + location  # 관측자 위치 설정
-    astrometric = observer.at(t)  # 관측 시점에서의 천체 위치 계산
-    ra, dec, _ = astrometric.radec()  # 적경(ra)과 적위(dec) 계산
-
-    # 적경과 적위를 이용해 별자리를 찾기
-    position = position_of_radec(ra.hours, dec.degrees)
-    constellation_name = constellation_map(position)
-    return constellation_name  # 별자리 이름 반환
 
 @main.route('/api/constellations', methods=['GET'])
 def get_constellations():
@@ -47,6 +19,8 @@ def get_constellations():
     longitude = request.args.get('lon')
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
+    hour = request.args.get('hour', default=0, type=int)
+    minute = request.args.get('minute', default=0, type=int)
 
     # 위도와 경도 입력 여부 확인
     if not latitude or not longitude:
@@ -77,10 +51,11 @@ def get_constellations():
     while current_date <= end_date:
         try:
             # 캐시된 결과를 사용해 별자리 계산
-            constellation = get_constellation_for_date(latitude, longitude, current_date.year, current_date.month, current_date.day)
+            constellation = get_constellation_for_date(latitude, longitude, current_date.year, current_date.month, current_date.day, hour, minute)
             # 결과를 리스트에 추가
             constellation_data.append({
                 "date": current_date.strftime('%Y-%m-%d'),
+                "time": f"{hour:02d}:{minute:02d}",
                 "constellations": constellation
             })
         except Exception as e:
