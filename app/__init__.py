@@ -2,6 +2,7 @@
 
 from flask import Flask
 
+
 def create_app():
     """
     Flask 애플리케이션을 생성하고 설정하는 함수

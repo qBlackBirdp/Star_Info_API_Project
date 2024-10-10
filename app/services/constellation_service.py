@@ -1,17 +1,16 @@
 # services/constellation_service.py
 
-from skyfield.api import load, Topos, N, E, load_constellation_map, position_of_radec
+from skyfield.api import Topos, N, E, load_constellation_map, position_of_radec
 from functools import lru_cache
+from app.global_resources import ts, planets  # 전역 리소스 임포트
 
-# Skyfield에서 사용할 타임스케일 및 행성 데이터 로드
-ts = load.timescale()
-planets = load('de421.bsp')  # 행성 데이터 로드 (de421.bsp 파일 필요)
-earth = planets['earth']  # 지구 객체 생성
+# 지구 객체 생성
+earth = planets['earth']
 
 # 별자리 데이터 로드
 constellation_map = load_constellation_map()
 
-# 간단한 캐시 구현 예시
+
 @lru_cache(maxsize=128)
 def get_constellation_for_date(latitude, longitude, year, month, day, hour, minute):
     """
@@ -27,6 +26,8 @@ def get_constellation_for_date(latitude, longitude, year, month, day, hour, minu
     # 적경과 적위를 이용해 별자리를 찾기
     position = position_of_radec(ra.hours, dec.degrees)
     constellation_name = constellation_map(position)
+
     return constellation_name  # 별자리 이름 반환
+
 
 __all__ = ['get_constellation_for_date']
