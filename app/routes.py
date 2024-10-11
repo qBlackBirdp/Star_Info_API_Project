@@ -6,6 +6,7 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 from .services.constellation_service import get_constellation_for_date
 from .services.sunrise_sunset_service import calculate_sunrise_sunset
+from app.services.planet_visibility_service import calculate_planet_info
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
@@ -121,4 +122,20 @@ def get_sunrise_sunset():
         "sunrise_sunset": sunrise_sunset_data
     })
 
+
+@main.route('/api/planet_visibility', methods=['GET'])
+def get_planet_visibility():
+    try:
+        planet_name = request.args.get('planet')
+        latitude = float(request.args.get('lat'))
+        longitude = float(request.args.get('lon'))
+        date_str = request.args.get('date')
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+
+        # 행성 가시성 정보 계산
+        planet_info = calculate_planet_info(planet_name, latitude, longitude, date)
+        return jsonify(planet_info)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
