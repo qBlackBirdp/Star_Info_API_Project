@@ -3,6 +3,9 @@ import multiprocessing as mp
 import logging
 from app import create_app
 import faulthandler
+import os
+print("Google Time Zone API Key:", os.getenv('GOOGLE_TIMEZONE_API_KEY'))
+
 
 faulthandler.enable()  # 메모리 검사 도구
 

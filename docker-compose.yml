@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    container_name: star-info-api-container
+    ports:
+      - "5555:5000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: ["python", "run.py"]
