@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from app.services.get_timezone_info import get_timezone_info
 from app.services.constellation_service import get_constellations_for_date_range
 from app.services.planet_visibility_service import calculate_planet_info
-from app.services.timezone_conversion_service import convert_local_to_utc_time
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
+from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
@@ -70,11 +70,29 @@ def get_constellations():
     if error_response:
         return jsonify(error_response), status_code
 
-    latitude, longitude, start_date, end_date, hour, minute = params
+    latitude, longitude, start_date, end_date = params[:4]  # hour와 minute 제거
 
     try:
         # 별자리 정보 계산 (날짜 범위에 대해 한 번만 호출)
-        constellation_data = get_constellations_for_date_range(latitude, longitude, start_date, end_date, hour, minute)
+        constellation_data = get_constellations_for_date_range(latitude, longitude, start_date, end_date)
+
+        # 각 별자리에 대해 가시성이 가장 좋은 시간대 계산
+        for day in constellation_data:
+            if "constellation" in day and "error" not in day:
+                constellation_name = day["constellation"]
+                best_visibility = get_best_visibility_time_for_constellation([day], latitude, longitude,
+                                                                             constellation_name)
+                if best_visibility and "best_visibility_time" in best_visibility[0]:
+                    day.update({
+                        "best_visibility_time": best_visibility[0]["best_visibility_time"],
+                        "max_altitude": best_visibility[0]["max_altitude"]
+                    })
+                else:
+                    day.update({
+                        "best_visibility_time": "N/A",
+                        "max_altitude": "N/A"
+                    })
+
     except Exception as e:
         return jsonify({"error": f"Failed to calculate constellations: {str(e)}"}), 500
 

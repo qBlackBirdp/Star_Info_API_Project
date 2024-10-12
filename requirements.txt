@@ -17,7 +17,7 @@ requests==2.32.3
 sgp4==2.23
 six==1.16.0
 skyfield==1.45
-skyfield-data==3.0.0
+skyfield-data==2.0.0
 tzdata==2024.2
 urllib3==2.2.3
 Werkzeug==3.0.4
