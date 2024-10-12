@@ -4,11 +4,8 @@ from datetime import datetime, timedelta
 from skyfield.api import Topos, N, E
 from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
+from .timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import 상대경로 유지.
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지.
-
-
-def convert_to_local_time(utc_time, offset_sec):
-    return utc_time + timedelta(seconds=offset_sec)
 
 
 def calculate_sunrise_sunset(latitude, longitude, date):
@@ -65,9 +62,9 @@ def calculate_sunrise_sunset(latitude, longitude, date):
     except Exception as e:
         return {"error": f"일몰 시간의 타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
 
-    # UTC 시간 -> 현지 시간으로 변환
-    sunrise_local = convert_to_local_time(sunrise_utc, sunrise_offset_sec)
-    sunset_local = convert_to_local_time(sunset_utc, sunset_offset_sec)
+    # UTC 시간 -> 현지 시간으로 변환 (timezone_conversion_service 사용)
+    sunrise_local = convert_utc_to_local_time(sunrise_utc, sunrise_offset_sec)
+    sunset_local = convert_utc_to_local_time(sunset_utc, sunset_offset_sec)
 
     return {
         "sunrise": sunrise_local.isoformat(),
