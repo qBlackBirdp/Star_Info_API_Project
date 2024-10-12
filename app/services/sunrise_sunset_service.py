@@ -8,7 +8,7 @@ from .timezone_conversion_service import convert_utc_to_local_time  # 시간 변
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지.
 
 
-def calculate_sunrise_sunset(latitude, longitude, date):
+def calculate_sunrise_sunset(latitude, longitude, date, cached_sunrise_sunset=None):
     """
     주어진 위치(위도, 경도)와 날짜에 대한 일출 및 일몰 시간을 계산하는 함수 (현지 시간 기준)
 
@@ -16,10 +16,15 @@ def calculate_sunrise_sunset(latitude, longitude, date):
         latitude (float): 위도
         longitude (float): 경도
         date (datetime): 일출 및 일몰을 계산할 날짜
+        cached_sunrise_sunset (dict, optional): 캐싱된 일출 및 일몰 정보
 
     Returns:
         dict: 일출 및 일몰 시간이 포함된 딕셔너리 (현지 시간 기준)
     """
+    # 사용자가 요청한 경우 캐시된 데이터 반환
+    if cached_sunrise_sunset is not None:
+        return cached_sunrise_sunset
+
     location = Topos(latitude * N, longitude * E)
 
     # 해당 날짜의 일출과 일몰을 찾기 위해 전날 자정부터 다음 날 자정까지 범위 설정
@@ -66,10 +71,12 @@ def calculate_sunrise_sunset(latitude, longitude, date):
     sunrise_local = convert_utc_to_local_time(sunrise_utc, sunrise_offset_sec)
     sunset_local = convert_utc_to_local_time(sunset_utc, sunset_offset_sec)
 
-    return {
+    result = {
         "sunrise": sunrise_local.isoformat(),
         "sunset": sunset_local.isoformat(),
     }
+
+    return result
 
 
 __all__ = ['calculate_sunrise_sunset']

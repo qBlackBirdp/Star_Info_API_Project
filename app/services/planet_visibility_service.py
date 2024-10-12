@@ -4,6 +4,9 @@ from datetime import datetime
 from skyfield.api import Topos
 from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
+from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
+from app.services.get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import
+from app.services.sunrise_sunset_service import calculate_sunrise_sunset  # 일출 및 일몰 계산 함수 import
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date):
@@ -35,13 +38,35 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
     astrometric = observer.observe(planet)
     ra, dec, _ = astrometric.radec()
 
+    # 일출 및 일몰 시간 가져오기
+    sunrise_sunset_data = calculate_sunrise_sunset(latitude, longitude, date)
+    if "error" in sunrise_sunset_data:
+        return {"error": sunrise_sunset_data["error"]}
+
+    sunrise_time = datetime.fromisoformat(sunrise_sunset_data["sunrise"]).time()
+    sunset_time = datetime.fromisoformat(sunrise_sunset_data["sunset"]).time()
+
     # 가장 좋은 관측 시간과 가시성 여부 설정
     visible = False
     best_time = None
     for t, visible_event in zip(times, is_visible):
         if visible_event == 1:  # 행성이 떠오르는 시간
             visible = True
-            best_time = t.utc_datetime().time()
+            # Google Time Zone API를 사용하여 타임존 정보 가져오기
+            try:
+                best_time_timestamp = int(t.utc_datetime().timestamp())
+                timezone_info = get_timezone_info(latitude, longitude, best_time_timestamp)
+                if 'rawOffset' not in timezone_info:
+                    raise ValueError("타임존 정보에 'rawOffset'이 없습니다.")
+                offset_sec = timezone_info['rawOffset'] + timezone_info.get('dstOffset', 0)
+                best_time = convert_utc_to_local_time(t.utc_datetime(), offset_sec).time()
+
+                # 낮 시간대인지 여부 판별
+                if sunrise_time <= best_time <= sunset_time:
+                    visible = False
+                    best_time = "낮 시간대 (관측 불가)"
+            except Exception as e:
+                return {"error": f"타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
             break
 
     if best_time is None:
@@ -56,7 +81,7 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
             "longitude": longitude
         },
         "visible": visible,
-        "best_time": best_time.strftime("%H:%M") if best_time != "N/A" else best_time,
+        "best_time": best_time if isinstance(best_time, str) else best_time.strftime("%H:%M"),
         "right_ascension": f"{ra.hours:.2f}h",  # 적경 값을 시간 단위로 변환하여 반환
         "declination": f"{dec.degrees:.2f}°"  # 적위 값을 도 단위로 반환
     }
