@@ -45,31 +45,20 @@ def calculate_sunrise_sunset(latitude, longitude, date, cached_sunrise_sunset=No
     if sunrise_utc is None or sunset_utc is None:
         return {"error": "일출 또는 일몰 시간을 계산할 수 없습니다."}
 
-    # Google Time Zone API를 사용하여 일출 시간의 타임존 정보 가져오기
+    # Google Time Zone API를 사용하여 타임존 정보 가져오기 (한 번만 호출하여 재사용)
     try:
-        sunrise_timestamp = int(sunrise_utc.timestamp())
-        sunrise_timezone_info = get_timezone_info(latitude, longitude, sunrise_timestamp)
-        print("Sunrise Time Zone API Response:", sunrise_timezone_info)  # 응답 내용 출력
-        if 'rawOffset' not in sunrise_timezone_info:
+        timezone_timestamp = int(sunrise_utc.timestamp())  # 일출 시간을 기준으로 타임존 정보 호출
+        timezone_info = get_timezone_info(latitude, longitude, timezone_timestamp)
+        print("Time Zone API Response:", timezone_info)  # 응답 내용 출력
+        if 'rawOffset' not in timezone_info:
             raise ValueError("타임존 정보에 'rawOffset'이 없습니다.")
-        sunrise_offset_sec = sunrise_timezone_info['rawOffset'] + sunrise_timezone_info.get('dstOffset', 0)
+        offset_sec = timezone_info['rawOffset'] + timezone_info.get('dstOffset', 0)
     except Exception as e:
-        return {"error": f"일출 시간의 타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
-
-    # Google Time Zone API를 사용하여 일몰 시간의 타임존 정보 가져오기
-    try:
-        sunset_timestamp = int(sunset_utc.timestamp())
-        sunset_timezone_info = get_timezone_info(latitude, longitude, sunset_timestamp)
-        print("Sunset Time Zone API Response:", sunset_timezone_info)  # 응답 내용 출력
-        if 'rawOffset' not in sunset_timezone_info:
-            raise ValueError("타임존 정보에 'rawOffset'이 없습니다.")
-        sunset_offset_sec = sunset_timezone_info['rawOffset'] + sunset_timezone_info.get('dstOffset', 0)
-    except Exception as e:
-        return {"error": f"일몰 시간의 타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
+        return {"error": f"타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
 
     # UTC 시간 -> 현지 시간으로 변환 (timezone_conversion_service 사용)
-    sunrise_local = convert_utc_to_local_time(sunrise_utc, sunrise_offset_sec)
-    sunset_local = convert_utc_to_local_time(sunset_utc, sunset_offset_sec)
+    sunrise_local = convert_utc_to_local_time(sunrise_utc, offset_sec)
+    sunset_local = convert_utc_to_local_time(sunset_utc, offset_sec)
 
     result = {
         "sunrise": sunrise_local.isoformat(),
