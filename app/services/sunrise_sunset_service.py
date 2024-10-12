@@ -63,6 +63,7 @@ def calculate_sunrise_sunset(latitude, longitude, date, cached_sunrise_sunset=No
     result = {
         "sunrise": sunrise_local.isoformat(),
         "sunset": sunset_local.isoformat(),
+        "offset_sec": offset_sec
     }
 
     return result
