@@ -5,7 +5,7 @@ from skyfield.api import Topos
 from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
 from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
-from app.services.sunrise_sunset_service import calculate_sunrise_sunset  # 일출 및 일몰 계산 함수 import
+from app.services.sunrise_sunset_service import get_single_day_sunrise_sunset  # 일출 및 일몰 계산 함수 import
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date):
@@ -24,14 +24,18 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
     # 위치 설정
     location = Topos(latitude, longitude)
 
-    # 일출 및 일몰 시간 계산 (먼저 수행하여 타임존 오프셋 저장)
-    sunrise_sunset_data = calculate_sunrise_sunset(latitude, longitude, date)
+    # 단일 날짜의 일출 및 일몰 정보 가져오기
+    sunrise_sunset_data = get_single_day_sunrise_sunset(latitude, longitude, date)
     if "error" in sunrise_sunset_data:
-        return {"error": sunrise_sunset_data["error"]}
+        return {"error": "Failed to calculate sunrise or sunset."}
 
-    # 캐시된 타임존 오프셋 사용하여 변환
-    offset_sec = sunrise_sunset_data.get("offset_sec")
+    # 타임존 오프셋 및 일출, 일몰 시간 가져오기
+    offset_sec = sunrise_sunset_data.get("offset")
+    if offset_sec is None:
+        return {"error": "Failed to retrieve timezone offset."}
     sunrise_time = datetime.fromisoformat(sunrise_sunset_data["sunrise"]).time()
+    if sunrise_time is None:
+        return {"error": "Failed to retrieve sunrise_time."}
     sunset_time = datetime.fromisoformat(sunrise_sunset_data["sunset"]).time()
 
     # 천체력에서 행성 가져오기
@@ -77,6 +81,3 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
         "right_ascension": f"{ra.hours:.2f}h",  # 적경 값을 시간 단위로 변환하여 반환
         "declination": f"{dec.degrees:.2f}°"  # 적위 값을 도 단위로 반환
     }
-
-
-__all__ = ['calculate_planet_info']

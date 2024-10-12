@@ -2,6 +2,11 @@
 
 import requests
 import os
+import logging
+
+# 로그 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_timezone_info(lat, lon, timestamp):
@@ -16,6 +21,8 @@ def get_timezone_info(lat, lon, timestamp):
         'timestamp': timestamp,
         'key': api_key
     }
+    # 로그 추가 - API 요청 시 로그 남기기
+    logger.info(f"Requesting Google Time Zone API for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
 
     response = requests.get(base_url, params=params)
 
