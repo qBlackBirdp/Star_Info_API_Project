@@ -2,7 +2,6 @@
 
 import requests
 from datetime import datetime, timedelta
-from urllib.parse import quote
 
 PLANET_CODES = {
     "Mercury": "199",
@@ -46,14 +45,20 @@ def get_planet_position_from_horizons(planet_name, date):
     if not planet_code:
         return {"error": "Invalid planet name."}
 
-    # 포맷 후 로그
-    print(f"Formatted Date after: {date}")
+    # 요청 유형에 따른 처리
+    if planet_name in PLANET_CODES:
+        request_type = "planet"
+    else:
+        request_type = "comet"
+
+    # 포맷 전 로그
+    print(f"Formatted Date Before: {date}")
 
     if isinstance(date, float):
         date = datetime.fromtimestamp(date)  # float를 datetime으로 변환
 
     # 포맷 후 로그
-    print(f"Formatted Date Before: {date}")
+    print(f"Formatted Date After: {date}")
 
     url = "https://ssd.jpl.nasa.gov/api/horizons.api"
     params = {
@@ -66,8 +71,11 @@ def get_planet_position_from_horizons(planet_name, date):
         "START_TIME": f"'{date.strftime('%Y-%m-%d')}'",
         "STOP_TIME": f"'{(date + timedelta(days=1)).strftime('%Y-%m-%d')}'",
         "STEP_SIZE": "'1 h'",
-        "QUANTITIES": "'1,9,20,23'"  # 필요한 데이터만 요청 (시간, 적경/적위, 태양 거리 등)
+        "QUANTITIES": "'1,20,23'"  # 필요한 데이터만 요청 (시간, 적경/적위, 태양 거리)
     }
+
+    # 포맷 후 로그
+    print(f"Formatted Parameters: {params}")
 
     response = requests.get(url, params=params)
     print(f"Request URL: {response.url}")  # 요청 URL 로그
@@ -76,12 +84,41 @@ def get_planet_position_from_horizons(planet_name, date):
     if response.status_code == 200:
         try:
             data = response.json()
-            print(f"Response Data: {data}")  # 응답 데이터 로그
+            # print(f"Response Data: {data}")  # 응답 데이터 로그
             if 'result' in data:
-                return data['result']
+                # 파싱 로직 추가
+                result_lines = data['result'].splitlines()
+                parsed_data = []
+                extracting = False
+                for line in result_lines:
+                    if "$$SOE" in line:
+                        extracting = True
+                        continue
+                    elif "$$EOE" in line:
+                        extracting = False
+                        break
+                    if extracting:
+                        parsed_data.append(line)
+                print(f"Parsed Data: {parsed_data}")  # 파싱된 데이터 로그
+
+                # 파싱된 데이터를 딕셔너리 형태로 변환
+                parsed_dict = []
+                for entry in parsed_data:
+                    parts = entry.split()
+                    parsed_dict.append({
+                        "time": f"{parts[0]} {parts[1]}",
+                        "ra": f"{parts[2]} {parts[3]} {parts[4]}",
+                        "dec": f"{parts[5]} {parts[6]} {parts[7]}",
+                        "delta": parts[8],
+                        "deldot": parts[9],
+                        "s-o-t": parts[10]
+                    })
+                print(f"Parsed Dictionary: {parsed_dict}")  # 딕셔너리 형태의 파싱 데이터 로그
+                return {"data": parsed_dict}
             else:
                 return {"error": "Unexpected response format from Horizons API."}
-        except ValueError:
+        except ValueError as e:
+            print(f"JSON parsing error: {e}")  # JSON 파싱 에러 로그
             return {"error": "Failed to parse JSON response from Horizons API."}
     else:
         return {"error": f"Failed to retrieve data from Horizons API. Status code: {response.status_code}"}
