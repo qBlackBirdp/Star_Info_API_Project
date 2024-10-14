@@ -46,7 +46,7 @@ def get_best_visibility_time_for_constellation(constellation_data, latitude, lon
             offset_sec = day_data.get("offset")
             if offset_sec is None:
                 raise ValueError("Missing offset in day_data")
-            logging.debug(f"Date: {date}, Sunset: {sunset_time}, Sunrise: {sunrise_time}, Offset: {offset_sec}")
+            # logging.debug(f"Date: {date}, Sunset: {sunset_time}, Sunrise: {sunrise_time}, Offset: {offset_sec}")
 
             # 일몰이 일출보다 늦은 경우 (다음 날로 넘어가는 경우)
             if sunset_time > sunrise_time:
@@ -75,14 +75,13 @@ def get_best_visibility_time_for_constellation(constellation_data, latitude, lon
                 # 적경과 적위를 이용해 별자리 이름을 찾음
                 position = position_of_radec(ra.hours, dec.degrees)
                 current_constellation = constellation_map(position)
-                logging.debug(
-                    f"Time: {t.utc_datetime()}, RA: {ra.hours}, DEC: {dec.degrees}, Constellation: {current_constellation}")
+                # logging.debug(f"Time: {t.utc_datetime()}, RA: {ra.hours}, DEC: {dec.degrees}, Constellation: {current_constellation}")
 
                 # 주어진 별자리와 일치하는지 확인
                 if current_constellation == constellation_name:
                     # 고도를 계산하여 가장 높은 고도를 가진 시간대를 찾음 (고정된 고도 사용)
                     altitude = KOREA_AVERAGE_ALTITUDE
-                    logging.debug(f"Current Altitude (Fixed): {altitude} meters")
+                    # logging.debug(f"Current Altitude (Fixed): {altitude} meters")
 
                     if altitude > max_altitude:
                         max_altitude = altitude

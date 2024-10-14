@@ -8,10 +8,12 @@ from app.services.get_timezone_info import get_timezone_info
 from app.services.constellation_service import get_constellations_for_date_range
 from app.services.planet_visibility_service import calculate_planet_info
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
+from .services.meteor_shower_service import get_meteor_shower_forecast
 from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
+meteor_shower = Blueprint('meteor_shower', __name__)
 
 
 def get_validated_params():
@@ -150,3 +152,12 @@ def get_planet_visibility():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+@meteor_shower.route('/api/meteor_showers', methods=['GET'])
+def get_meteor_showers():
+    """
+    유성우 예보 정보를 반환하는 API 엔드포인트
+    """
+    meteor_shower_data = get_meteor_shower_forecast()
+    return jsonify(meteor_shower_data)
