@@ -1,7 +1,7 @@
 # Flask 앱 초기화
 
 from flask import Flask
-from .routes import main, meteor_shower
+from .routes import main
 
 
 def create_app():
@@ -12,6 +12,5 @@ def create_app():
 
     # Blueprint 등록
     app.register_blueprint(main)
-    app.register_blueprint(meteor_shower)
 
     return app

@@ -6,6 +6,7 @@ from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
 from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
 from app.services.sunrise_sunset_service import get_single_day_sunrise_sunset  # 일출 및 일몰 계산 함수 import
+from app.services.horizons_service import get_planet_position_from_horizons  # NASA JPL Horizons API 데이터 호출 함수 import
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date):
@@ -37,6 +38,11 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
     if sunrise_time is None:
         return {"error": "Failed to retrieve sunrise_time."}
     sunset_time = datetime.fromisoformat(sunrise_sunset_data["sunset"]).time()
+
+    # NASA JPL Horizons API를 사용하여 행성 데이터 가져오기
+    planet_data = get_planet_position_from_horizons(planet_name, date)
+    if "error" in planet_data:
+        return {"error": "Failed to retrieve planet data from Horizons API."}
 
     # 천체력에서 행성 가져오기
     planet = planets[planet_name]
