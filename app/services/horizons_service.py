@@ -7,32 +7,32 @@ PLANET_CODES = {
     "Mercury": "199",
     "Venus": "299",
     "Earth": "399",
-    "Moon": "301",
     "Mars": "499",
+    "Jupiter": "599",
+    "Saturn": "699",
+    "Uranus": "799",
+    "Neptune": "899",
+    "Pluto": "999",
+    "Moon": "301",
     "Phobos": "401",
     "Deimos": "402",
-    "Jupiter": "599",
     "Io": "501",
     "Europa": "502",
     "Ganymede": "503",
     "Callisto": "504",
-    "Saturn": "699",
     "Mimas": "601",
     "Enceladus": "602",
     "Tethys": "603",
     "Dione": "604",
     "Rhea": "605",
     "Titan": "606",
-    "Uranus": "799",
     "Miranda": "701",
     "Ariel": "702",
     "Umbriel": "703",
     "Titania": "704",
     "Oberon": "705",
-    "Neptune": "899",
     "Triton": "801",
     "Nereid": "802",
-    "Pluto": "999",
     "Ceres": "1;",
     "Pallas": "2;",
     "Vesta": "3;",
@@ -40,25 +40,31 @@ PLANET_CODES = {
 }
 
 
-def get_planet_position_from_horizons(planet_name, date):
+def get_planet_position_from_horizons(planet_name, date, range_days):
     planet_code = PLANET_CODES.get(planet_name)
     if not planet_code:
         return {"error": "Invalid planet name."}
-
     # 요청 유형에 따른 처리
     if planet_name in PLANET_CODES:
         request_type = "planet"
     else:
         request_type = "comet"
 
+    print(f"planet_code: {planet_code}")
     # 포맷 전 로그
-    print(f"Formatted Date Before: {date}")
+    # print(f"Formatted Date Before: {date}")
 
     if isinstance(date, float):
         date = datetime.fromtimestamp(date)  # float를 datetime으로 변환
 
     # 포맷 후 로그
-    print(f"Formatted Date After: {date}")
+    # print(f"Formatted Date After: {date}")
+
+    # 단일 날짜 요청 처리
+    if range_days == 1:
+        end_date = date + timedelta(days=1)
+    else:
+        end_date = date + timedelta(days=range_days)
 
     url = "https://ssd.jpl.nasa.gov/api/horizons.api"
     params = {
@@ -69,13 +75,13 @@ def get_planet_position_from_horizons(planet_name, date):
         "EPHEM_TYPE": "OBSERVER",
         "OBJ_DATA": "YES",
         "START_TIME": f"'{date.strftime('%Y-%m-%d')}'",
-        "STOP_TIME": f"'{(date + timedelta(days=1)).strftime('%Y-%m-%d')}'",
-        "STEP_SIZE": "'1 h'",
+        "STOP_TIME": f"'{end_date.strftime('%Y-%m-%d')}'",
+        "STEP_SIZE": "'1 d'",
         "QUANTITIES": "'1,20,23'"  # 필요한 데이터만 요청 (시간, 적경/적위, 태양 거리)
     }
 
     # 포맷 후 로그
-    print(f"Formatted Parameters: {params}")
+    # print(f"Formatted Parameters: {params}")
 
     response = requests.get(url, params=params)
     print(f"Request URL: {response.url}")  # 요청 URL 로그
@@ -99,7 +105,7 @@ def get_planet_position_from_horizons(planet_name, date):
                         break
                     if extracting:
                         parsed_data.append(line)
-                print(f"Parsed Data: {parsed_data}")  # 파싱된 데이터 로그
+                # print(f"Parsed Data: {parsed_data}")  # 파싱된 데이터 로그
 
                 # 파싱된 데이터를 딕셔너리 형태로 변환
                 parsed_dict = []

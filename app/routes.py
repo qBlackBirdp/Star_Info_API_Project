@@ -144,11 +144,11 @@ def get_planet_visibility():
         longitude = float(request.args.get('lon'))
         date_str = request.args.get('date')
         date = datetime.strptime(date_str, "%Y-%m-%d")
+        range_days = int(request.args.get('range_days', 1))  # 기본값으로 1일 설정
 
         # 행성 가시성 정보 계산
-        planet_info = calculate_planet_info(planet_name, latitude, longitude, date)
+        planet_info = calculate_planet_info(planet_name, latitude, longitude, date, range_days)
         return jsonify(planet_info)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
