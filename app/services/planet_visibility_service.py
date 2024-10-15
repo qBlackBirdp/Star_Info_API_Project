@@ -44,6 +44,16 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
     if "error" in planet_data:
         return {"error": "Failed to retrieve planet data from Horizons API."}
 
+    # 파싱된 Horizons 데이터 추가
+    horizons_data = planet_data.get("data")
+    if not horizons_data:
+        return {"error": "No valid data from Horizons API."}
+
+    # 가장 가까운 시간의 데이터 사용
+    closest_data = horizons_data[0]
+    delta = float(closest_data["delta"])
+    s_o_t = float(closest_data["s-o-t"])
+
     # 천체력에서 행성 가져오기
     planet = planets[planet_name]
 
@@ -56,6 +66,15 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
     observer = (planets['earth'] + location).at(t0)
     astrometric = observer.observe(planet)
     ra, dec, _ = astrometric.radec()
+
+    # 가시성 판단 추가 로직
+    visibility_judgment = "Unknown"
+    if delta < 1.5 and s_o_t > 30:
+        visibility_judgment = "Good visibility"
+    elif 1.5 <= delta < 2.5 and s_o_t > 20:
+        visibility_judgment = "Moderate visibility"
+    else:
+        visibility_judgment = "Poor visibility"
 
     # 가장 좋은 관측 시간과 가시성 여부 설정
     visible = False
@@ -85,5 +104,8 @@ def calculate_planet_info(planet_name, latitude, longitude, date):
         "visible": visible,
         "best_time": best_time if isinstance(best_time, str) else best_time.strftime("%H:%M"),
         "right_ascension": f"{ra.hours:.2f}h",  # 적경 값을 시간 단위로 변환하여 반환
-        "declination": f"{dec.degrees:.2f}°"  # 적위 값을 도 단위로 반환
+        "declination": f"{dec.degrees:.2f}°",  # 적위 값을 도 단위로 반환
+        "distance_to_earth": f"{delta:.2f} AU",  # 지구와의 거리 추가
+        "sun_observer_target_angle": f"{s_o_t:.2f}°",  # 태양-관측자-행성 각도 추가
+        "visibility_judgment": visibility_judgment  # 가시성 판단 추가
     }
