@@ -1,11 +1,14 @@
+version: '3.8'
+
 services:
   app:
     build: .
-    container_name: star-info-api-container
+    container_name: star-info-api-container_compose
     ports:
       - "5555:5000"
-    env_file:
-      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
+      - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
     command: ["python", "run.py"]

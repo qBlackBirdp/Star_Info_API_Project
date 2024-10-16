@@ -119,7 +119,7 @@ def get_planet_position_from_horizons(planet_name, date, range_days):
                         "deldot": parts[9],
                         "s-o-t": parts[10]
                     })
-                print(f"Parsed Dictionary: {parsed_dict}")  # 딕셔너리 형태의 파싱 데이터 로그
+                # print(f"Parsed Dictionary: {parsed_dict}")  # 딕셔너리 형태의 파싱 데이터 로그
                 return {"data": parsed_dict}
             else:
                 return {"error": "Unexpected response format from Horizons API."}

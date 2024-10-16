@@ -4,12 +4,13 @@
 
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
-from app.services.get_timezone_info import get_timezone_info
-from app.services.constellation_service import get_constellations_for_date_range
-from app.services.planet_visibility_service import calculate_planet_info
-from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
+from .services.get_timezone_info import get_timezone_info
+from .services.constellation_service import get_constellations_for_date_range
+from .services.planet_visibility_service import calculate_planet_info
+from .services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
+from .services.planet_event_storage_service import calculate_and_store_opposition_event, fetch_stored_event
 from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
-from app.services.planet_opposition_service import predict_opposition_events_with_visibility
+from .services.planet_opposition_service import predict_opposition_events_with_visibility
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
@@ -183,3 +184,37 @@ def get_opposition_event():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@main.route('/calculate_store_event', methods=['GET'])
+def calculate_store_event_endpoint():
+    try:
+        planet_name = request.args.get('planet_name')
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+
+        if not planet_name or not start_date_str or not end_date_str:
+            return jsonify({"error": "Missing required parameters."}), 400
+
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+
+        calculate_and_store_opposition_event(planet_name, start_date, end_date)
+
+        return jsonify({'message': 'Planet event data stored successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@main.route('/fetch_event', methods=['GET'])
+def fetch_event_endpoint():
+    try:
+        planet_name = request.args.get('planet_name')
+        target_date = datetime.strptime(request.args.get('target_date'), '%Y-%m-%d')
+        event = fetch_stored_event(planet_name, target_date)
+        if event:
+            return jsonify(event), 200
+        else:
+            return jsonify({'message': 'No event found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
