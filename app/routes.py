@@ -9,10 +9,10 @@ from app.services.constellation_service import get_constellations_for_date_range
 from app.services.planet_visibility_service import calculate_planet_info
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
 from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
+from app.services.planet_opposition_service import predict_opposition_events_with_visibility
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
-meteor_shower = Blueprint('meteor_shower', __name__)
 
 
 def get_validated_params():
@@ -152,3 +152,34 @@ def get_planet_visibility():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+@main.route('/api/opposition', methods=['GET'])
+def get_opposition_event():
+    """
+    사용자가 요청한 행성의 대접근 예측을 반환하는 API 엔드포인트
+    """
+    try:
+        planet_name = request.args.get('planet')
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        latitude = request.args.get('latitude', type=float)
+        longitude = request.args.get('longitude', type=float)
+
+        if not planet_name or not start_date_str or not end_date_str or latitude is None or longitude is None:
+            return jsonify({"error": "Missing required parameters."}), 400
+
+        # 날짜 형식 변환
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # 대접근 이벤트 예측
+        result = predict_opposition_events_with_visibility(planet_name, start_date, end_date, latitude, longitude)
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

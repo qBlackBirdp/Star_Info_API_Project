@@ -8,7 +8,7 @@ from .timezone_conversion_service import convert_utc_to_local_time  # 시간 변
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지.
 
 
-def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date, offset_sec=None):
+def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date, offset_sec=None, timezone_id=None):
     """
     주어진 위치(위도, 경도)와 날짜 범위에 대한 일출 및 일몰 시간을 계산하는 함수 (현지 시간 기준)
 
@@ -18,6 +18,7 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
         start_date (datetime): 일출 및 일몰을 계산할 시작 날짜
         end_date (datetime): 일출 및 일몰을 계산할 종료 날짜
         offset_sec (int, optional): 타임존 오프셋 (초 단위) (기존에 계산된 값이 있을 때 재사용)
+        timezone_id (str, optional): 타임존 ID (기존에 계산된 값이 있을 때 재사용)
 
     Returns:
         list: 일출 및 일몰 시간이 포함된 딕셔너리 리스트 (현지 시간 기준)
@@ -26,13 +27,14 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
     result_list = []
 
     # 첫 번째 날짜에 대해 타임존 오프셋을 계산하여 재사용 (만약 제공되지 않은 경우)
-    if offset_sec is None:
+    if offset_sec is None or timezone_id is None:
         try:
             timezone_timestamp = int(start_date.timestamp())
             timezone_info = get_timezone_info(latitude, longitude, timezone_timestamp)
             if 'rawOffset' not in timezone_info:
                 raise ValueError("타임존 정보에 'rawOffset'이 없습니다.")
             offset_sec = timezone_info['rawOffset'] + timezone_info.get('dstOffset', 0)
+            timezone_id = timezone_info['timeZoneId']
         except Exception as e:
             return {"error": f"타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
 
@@ -67,7 +69,8 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
                 "date": current_date.strftime('%Y-%m-%d'),
                 "sunrise": sunrise_local.isoformat(),
                 "sunset": sunset_local.isoformat(),
-                "offset": offset_sec
+                "offset": offset_sec,
+                "timeZoneId": timezone_id
             })
 
         # 날짜를 하루 증가
