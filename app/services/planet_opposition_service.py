@@ -1,24 +1,23 @@
 # services/planet_opposition_service.py
 
-import time
-from datetime import timedelta, datetime
-
+from datetime import datetime
 from app.services.horizons_service import get_planet_position_from_horizons
 from app.services.planet_visibility_service import calculate_planet_info
+from global_db_connection import get_db_connection
 
 
 # 행성 이름과 코드 간의 매핑
 def get_planet_code(planet_name):
     planet_name_map = {
-        "Mercury": "Mercury",
-        "Venus": "Venus",
-        "Earth": "Earth",
-        "Mars": "Mars barycenter",
-        "Jupiter": "Jupiter barycenter",
-        "Saturn": "Saturn barycenter",
-        "Uranus": "Uranus barycenter",
-        "Neptune": "Neptune barycenter",
-        "Pluto": "Pluto barycenter"
+        "Mercury": 199,
+        "Venus": 299,
+        "Earth": 399,
+        "Mars": 499,
+        "Jupiter": 599,
+        "Saturn": 699,
+        "Uranus": 799,
+        "Neptune": 899,
+        "Pluto": 999
     }
     return planet_name_map.get(planet_name)
 
@@ -46,48 +45,75 @@ def predict_opposition_events_with_visibility(planet_name, start_date, end_date,
     timezone_id = visibility_info[0].get('timeZoneId')
     offset_sec = visibility_info[0].get('offset_sec')
 
-    print(f"Timezone ID: {timezone_id}")
-
     # 행성 이름을 코드로 변환
     planet_code = get_planet_code(planet_name)
     if not planet_code:
         return {"error": f"Invalid planet name: {planet_name}"}
 
-    print(f"planet_name 1: {planet_name}")
-    print(f"planet_code 1: {planet_code}")
-    current_date = start_date
-    closest_date = None
-    min_distance = float('inf')
+    # 전역 DB 연결 가져오기
+    conn = get_db_connection()
+    if conn is None:
+        return {"error": "DB 연결을 사용할 수 없습니다."}
 
-    # NASA JPL Horizons API를 사용하여 주어진 범위에서의 거리 계산
-    while current_date <= end_date:
-        # 한 달씩 요청하기 위해 범위 설정
-        month_end_date = current_date + timedelta(days=30)
-        if month_end_date > end_date:
-            month_end_date = end_date
+    cursor = None
+    try:
+        cursor = conn.cursor()
+        # 행성 데이터가 이미 DB에 존재하는지 확인
+        table_name = f"{planet_name.lower()}_{start_date.year}_opposition_events"  # 여기서만 소문자로 변환
+        select_query = f"""
+            SELECT reg_date, distance FROM {table_name}
+            WHERE planet_code = %s AND reg_date BETWEEN %s AND %s
+        """
+        cursor.execute(select_query, (planet_code, start_date, end_date))
+        rows = cursor.fetchall()
 
-        planet_data = get_planet_position_from_horizons(planet_name, current_date, (month_end_date - current_date).days)
+        closest_date = None
+        min_distance = float('inf')
 
-        if "error" in planet_data:
-            return {"error": "Failed to retrieve planet data from Horizons API."}
+        if rows:
+            # DB에서 데이터를 가져와서 가장 가까운 거리 계산
+            for row in rows:
+                reg_date, delta = row
+                if delta < min_distance:
+                    min_distance = delta
+                    closest_date = reg_date
+        else:
+            # 해당 연도와 행성의 데이터가 없는 경우 Horizons API 요청
+            year_start_date = datetime(start_date.year, 1, 1)
+            year_end_date = datetime(start_date.year, 12, 31)
 
-        horizons_data = planet_data.get("data")
-        if not horizons_data:
-            return {"error": "No valid data from Horizons API."}
+            planet_data = get_planet_position_from_horizons(planet_name, year_start_date,
+                                                            (year_end_date - year_start_date).days)
 
-        # 각 날짜의 거리 가져오기
-        for day_data in horizons_data:
-            delta = float(day_data["delta"])
-            date = datetime.strptime(day_data["time"], "%Y-%b-%d %H:%M")
+            if "error" in planet_data:
+                return {"error": "Failed to retrieve planet data from Horizons API."}
 
-            # 가장 짧은 거리 찾기
-            if delta < min_distance:
-                min_distance = delta
-                closest_date = date
+            horizons_data = planet_data.get("data")
+            if not horizons_data:
+                return {"error": "No valid data from Horizons API."}
 
-        # 한 달씩 증가
-        current_date = month_end_date + timedelta(days=1)
-        time.sleep(1)  # API 요청 간 딜레이 추가
+            # 각 날짜의 거리 가져오기 및 DB 저장
+            insert_query = f"""
+                INSERT INTO {table_name} (planet_code, reg_date, distance)
+                VALUES (%s, %s, %s)
+            """
+            for day_data in horizons_data:
+                delta = float(day_data["delta"])
+                date = datetime.strptime(day_data["time"], "%Y-%b-%d %H:%M")
+
+                # 가장 짧은 거리 찾기
+                if delta < min_distance:
+                    min_distance = delta
+                    closest_date = date
+
+                cursor.execute(insert_query, (planet_code, date, delta))
+            conn.commit()
+
+    except Exception as e:
+        return {"error": f"DB 작업 중 에러 발생: {e}"}
+    finally:
+        if cursor is not None:
+            cursor.close()
 
     if closest_date is None:
         return {"error": "Failed to find opposition event."}
