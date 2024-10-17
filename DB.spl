@@ -1,19 +1,115 @@
-SET GLOBAL event_scheduler = ON;
-SELECT VERSION();
-GRANT SELECT, INSERT, UPDATE, DELETE ON STAR_INFO_API_DB.* TO 'root'@'%';
-FLUSH PRIVILEGES;
-
-
 -- 데이터베이스 삭제 및 생성
 DROP DATABASE IF EXISTS `STAR_INFO_API_DB`;
 CREATE DATABASE `STAR_INFO_API_DB`;
 USE `STAR_INFO_API_DB`;
 
-CREATE TABLE IF NOT EXISTS planet_opposition_events (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    planet_name VARCHAR(255) NOT NULL,
-    reg_date DATE NOT NULL,
-    distance DOUBLE NOT NULL
+-- 행성 정보 테이블 생성
+CREATE TABLE planet_info (
+                             planet_code INT PRIMARY KEY,
+                             planet_name VARCHAR(255) NOT NULL
 );
 
-SELECT * FROM planet_opposition_events;
+-- 행성 정보 초기 데이터 삽입
+INSERT INTO planet_info (planet_code, planet_name) VALUES
+                                                       (199, 'Mercury'),
+                                                       (299, 'Venus'),
+                                                       (399, 'Earth'),
+                                                       (499, 'Mars'),
+                                                       (599, 'Jupiter'),
+                                                       (699, 'Saturn'),
+                                                       (799, 'Uranus'),
+                                                       (899, 'Neptune'),
+                                                       (999, 'Pluto');
+
+-- 각 행성에 대한 테이블 생성 (1년치 데이터를 저장)
+
+-- 수성 (Mercury, 행성 코드: 199)
+CREATE TABLE mercury_2024_opposition_events (
+                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                planet_code INT NOT NULL,
+                                                reg_date DATE NOT NULL,
+                                                distance DOUBLE NOT NULL
+);
+
+-- 금성 (Venus, 행성 코드: 299)
+CREATE TABLE venus_2024_opposition_events (
+                                              id INT AUTO_INCREMENT PRIMARY KEY,
+                                              planet_code INT NOT NULL,
+                                              reg_date DATE NOT NULL,
+                                              distance DOUBLE NOT NULL
+);
+
+-- 화성 (Mars, 행성 코드: 499)
+CREATE TABLE mars_2024_opposition_events (
+                                             id INT AUTO_INCREMENT PRIMARY KEY,
+                                             planet_code INT NOT NULL,
+                                             reg_date DATE NOT NULL,
+                                             distance DOUBLE NOT NULL
+);
+
+-- 목성 (Jupiter, 행성 코드: 599)
+CREATE TABLE jupiter_2024_opposition_events (
+                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                planet_code INT NOT NULL,
+                                                reg_date DATE NOT NULL,
+                                                distance DOUBLE NOT NULL
+);
+
+-- 토성 (Saturn, 행성 코드: 699)
+CREATE TABLE saturn_2024_opposition_events (
+                                               id INT AUTO_INCREMENT PRIMARY KEY,
+                                               planet_code INT NOT NULL,
+                                               reg_date DATE NOT NULL,
+                                               distance DOUBLE NOT NULL
+);
+
+-- 천왕성 (Uranus, 행성 코드: 799)
+CREATE TABLE uranus_2024_opposition_events (
+                                               id INT AUTO_INCREMENT PRIMARY KEY,
+                                               planet_code INT NOT NULL,
+                                               reg_date DATE NOT NULL,
+                                               distance DOUBLE NOT NULL
+);
+
+-- 해왕성 (Neptune, 행성 코드: 899)
+CREATE TABLE neptune_2024_opposition_events (
+                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                planet_code INT NOT NULL,
+                                                reg_date DATE NOT NULL,
+                                                distance DOUBLE NOT NULL
+);
+
+-- 명왕성 (Pluto, 행성 코드: 999)
+CREATE TABLE pluto_2024_opposition_events (
+                                              id INT AUTO_INCREMENT PRIMARY KEY,
+                                              planet_code INT NOT NULL,
+                                              reg_date DATE NOT NULL,
+                                              distance DOUBLE NOT NULL
+);
+
+-- 수성 테이블 조회
+SELECT * FROM mercury_2024_opposition_events;
+
+-- 금성 테이블 조회
+SELECT * FROM venus_2024_opposition_events;
+
+-- 화성 테이블 조회
+SELECT * FROM mars_2024_opposition_events;
+
+-- 목성 테이블 조회
+SELECT * FROM jupiter_2024_opposition_events;
+
+-- 토성 테이블 조회
+SELECT * FROM saturn_2024_opposition_events;
+
+-- 천왕성 테이블 조회
+SELECT * FROM uranus_2024_opposition_events;
+
+-- 해왕성 테이블 조회
+SELECT * FROM neptune_2024_opposition_events;
+
+-- 명왕성 테이블 조회
+SELECT * FROM pluto_2024_opposition_events;
+
+-- 행성 이름 조회
+SELECT * FROM planet_info;

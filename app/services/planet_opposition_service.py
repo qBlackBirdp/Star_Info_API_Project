@@ -1,10 +1,10 @@
 # services/planet_opposition_service.py
 
+import time
 from datetime import timedelta, datetime
+
 from app.services.horizons_service import get_planet_position_from_horizons
 from app.services.planet_visibility_service import calculate_planet_info
-from app.services.get_timezone_info import get_timezone_info
-import time
 
 
 # 행성 이름과 코드 간의 매핑
