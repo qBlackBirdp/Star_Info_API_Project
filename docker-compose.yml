@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  my_network:  # 네트워크 정의
+    driver: bridge
+
 services:
   app:
     build: .
@@ -8,7 +12,34 @@ services:
       - "5555:5000"
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app  # PYTHONPATH 설정 추가
     volumes:
       - .:/app
       - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
     command: ["python", "run.py"]
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - my_network  # 네트워크 설정 추가
+
+  mysql_db:
+    image: mariadb:10.4
+    container_name: mysql_container
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"  # 비밀번호는 문자열로 지정
+      MYSQL_DATABASE: STAR_INFO_API_DB
+    volumes:
+      - mysql_data:/var/lib/mysql  # 데이터베이스 데이터를 유지하기 위한 볼륨 추가
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d  # 초기화 스크립트 마운트
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234" ]
+      interval: 10s
+      retries: 3
+    networks:
+      - my_network  # 네트워크 설정 추가
+
+volumes:
+  mysql_data:  # 데이터 영속성을 위한 볼륨 선언

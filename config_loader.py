@@ -21,7 +21,7 @@ def load_db_config():
             'user': config['database']['user'],
             'password': config['database']['password'],
             'host': config['database']['host'],
-            'port': config['database']['port'],
+            'port': int(config['database']['port']),  # 포트는 정수로 변환
             'database': config['database']['database']
         }
 

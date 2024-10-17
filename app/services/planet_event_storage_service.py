@@ -3,79 +3,84 @@
 import logging
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_planet_position_from_horizons
-from config_loader import load_db_config
-import mysql.connector
 import calendar
+from global_db_connection import get_db_connection
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-DB_CONFIG = load_db_config()
 
 
 def store_planet_event(planet_name, event_date, distance):
     logging.info("===================store_planet_event 작동=======================")
     logging.info(f"행성 이름: {planet_name}, 날짜: {event_date}, 거리: {distance}")
-    conn = None
+    logging.info(f"원본 날짜 데이터 타입: {type(event_date)}, 포맷팅 전: {event_date}")
+    # 날짜 데이터 포맷팅
+    db_date = str(event_date.strftime('%Y-%m-%d'))
+    logging.info(f"포맷팅된 날짜: {db_date}, 데이터 타입: {type(db_date)}")
+
+    # 전역 DB 연결 가져오기
+    conn = get_db_connection()
+    if conn is None:
+        logging.error("DB 연결을 사용할 수 없습니다.")
+        return
+
     cursor = None
     try:
-        logging.info("DB 연결 시도 중...")
-        conn = mysql.connector.connect(**DB_CONFIG)
-        logging.info("DB 연결 성공")
+        logging.info(f"쿼리 전달 인자: planet_name={planet_name}, formatted_date={db_date}, distance={distance}")
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO planet_opposition_events (planet_name, date, distance)
+            INSERT INTO planet_opposition_events (planet_name, reg_date, distance)
             VALUES (%s, %s, %s)
-        ''', (planet_name, event_date.strftime('%Y-%m-%d'), distance))
+        ''', (planet_name, db_date, distance))
         conn.commit()
         logging.info("데이터 저장 성공")
-    except mysql.connector.Error as err:
-        logging.error(f"DB 에러 발생: {err}")
     except Exception as e:
-        logging.error(f"기타 예외 발생: {e}")
+        logging.error(f"==DB 작업 중 에러 발생==: {e}")
     finally:
         if cursor is not None:
             cursor.close()
-        if conn is not None:
-            conn.close()
         logging.info("===================정보 저장 로직 끝=======================")
 
 
 def fetch_stored_event(planet_name, target_date):
     logging.info("===================fetch_stored_event 작동=======================")
     logging.info(f"행성 이름: {planet_name}, 검색 날짜: {target_date}")
-    conn = None
+    logging.info(f"원본 검색 날짜 데이터 타입: {type(target_date)}, 포맷팅 전: {target_date}")
+    # 날짜 데이터 포맷팅
+    db_date = target_date.strftime('%Y-%m-%d')
+    logging.info(f"포맷팅된 검색 날짜: {db_date}, 데이터 타입: {type(db_date)}")
+
+    # 전역 DB 연결 가져오기
+    conn = get_db_connection()
+    if conn is None:
+        logging.error("DB 연결을 사용할 수 없습니다.")
+        return
+
     cursor = None
     row = None
     try:
         logging.info("DB 연결 시도 중...")
-        conn = mysql.connector.connect(**DB_CONFIG)
-        logging.info("DB 연결 성공")
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT date, distance FROM planet_opposition_events
-            WHERE planet_name = %s AND date = %s
-        ''', (planet_name, target_date.strftime('%Y-%m-%d')))
+            SELECT reg_date, distance FROM planet_opposition_events
+            WHERE planet_name = %s AND reg_date = %s
+        ''', (planet_name, db_date))
         row = cursor.fetchone()
         if row:
             logging.info(f"검색된 데이터: {row}")
         else:
             logging.info("해당 날짜에 대한 데이터 없음")
-    except mysql.connector.Error as err:
-        logging.error(f"DB 에러 발생: {err}")
     except Exception as e:
-        logging.error(f"기타 예외 발생: {e}")
+        logging.error(f"DB 작업 중 에러 발생: {e}")
     finally:
         if cursor is not None:
             cursor.close()
-        if conn is not None:
-            conn.close()
         logging.info("===================정보 불러오기 로직 끝=======================")
 
     if row:
         return {
             'planet_name': planet_name,
-            'date': row[0],
+            'reg_date': row[0],
             'distance': row[1]
         }
     return None
@@ -109,15 +114,16 @@ def calculate_and_store_opposition_event(planet_name, start_date, end_date):
             raise ValueError("No valid data from Horizons API.")
 
         for day_data in horizons_data:
-            delta = float(day_data['delta'])
-            date = datetime.strptime(day_data['time'], '%Y-%b-%d %H:%M')
-            logging.info(f"저장할 데이터 - 날짜: {date}, 거리: {delta}")
-            store_planet_event(planet_name, date, delta)
+            try:
+                delta = float(day_data['delta'])
+                reg_date = datetime.strptime(day_data['time'], '%Y-%b-%d %H:%M')
+                logging.info(f"거리 데이터 타입: {type(delta)}")
+                logging.info(f"저장할 데이터 - 날짜: {reg_date}, 거리: {delta}")
+                store_planet_event(planet_name, reg_date, delta)
+            except ValueError as e:
+                logging.error(f"데이터 변환 오류: {e}, 원본 데이터: {day_data}")
+                continue
 
         current_date = month_end_date + timedelta(days=1)
 
     logging.info("===================calculate_and_store_opposition_event 로직 끝=======================")
-
-
-__all__ = ['store_planet_event', 'fetch_stored_event',
-           'calculate_and_store_opposition_event']
