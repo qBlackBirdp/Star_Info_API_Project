@@ -3,7 +3,6 @@
 import atexit
 import logging
 from typing import Optional
-
 import pymysql
 from pymysql.connections import Connection
 from config_loader import load_db_config
@@ -37,6 +36,19 @@ load_db_connection()
 # DB 연결 객체 반환 함수
 def get_db_connection():
     global DB_CONNECTION
+    try:
+        # 커넥션이 유효한지 확인하고, 끊어진 경우 재연결 시도
+        if DB_CONNECTION is None or not DB_CONNECTION.open:
+            logging.warning("DB 연결이 끊어졌습니다. 재연결 시도 중...")
+            load_db_connection()
+
+        # 유효성 검사 - 커넥션 핑
+        DB_CONNECTION.ping(reconnect=True)
+
+    except Exception as e:
+        logging.error(f"DB 재연결 시도 중 오류 발생: {e}")
+        DB_CONNECTION = None
+
     return DB_CONNECTION
 
 

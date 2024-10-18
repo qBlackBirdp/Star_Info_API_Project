@@ -162,23 +162,16 @@ def get_opposition_event():
     """
     try:
         planet_name = request.args.get('planet')
-        start_date_str = request.args.get('start_date')
-        end_date_str = request.args.get('end_date')
+        year = request.args.get('year', type=int)
         latitude = request.args.get('latitude', type=float)
         longitude = request.args.get('longitude', type=float)
 
-        if not planet_name or not start_date_str or not end_date_str or latitude is None or longitude is None:
+        # 필수 매개변수 검증
+        if not planet_name or not year or latitude is None or longitude is None:
             return jsonify({"error": "Missing required parameters."}), 400
 
-        # 날짜 형식 변환
-        try:
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
-        except ValueError:
-            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-        # 대접근 이벤트 예측
-        result = predict_opposition_events_with_visibility(planet_name, start_date, end_date, latitude, longitude)
+        # 대접근 이벤트 예측 호출
+        result = predict_opposition_events_with_visibility(planet_name, year, latitude, longitude)
 
         return jsonify(result)
 
