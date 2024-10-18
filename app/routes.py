@@ -8,9 +8,9 @@ from .services.get_timezone_info import get_timezone_info
 from .services.constellation_service import get_constellations_for_date_range
 from .services.planet_visibility_service import calculate_planet_info
 from .services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
-from .services.planet_event_storage_service import calculate_and_store_opposition_event, fetch_stored_event
+from .services.planet_event_storage_service import update_raw_data
 from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
-from .services.planet_opposition_service import predict_opposition_events_with_visibility
+from .services.planet_opposition_service import predict_opposition_events
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)
@@ -163,20 +163,13 @@ def get_opposition_event():
     try:
         planet_name = request.args.get('planet')
         year = request.args.get('year', type=int)
-        latitude = request.args.get('latitude', type=float)
-        longitude = request.args.get('longitude', type=float)
-        quarter = request.args.get('quarter', type=int, default=None)
 
         # 필수 매개변수 검증
-        if not planet_name or not year or latitude is None or longitude is None:
+        if not planet_name or not year:
             return jsonify({"error": "Missing required parameters."}), 400
 
-        # 유효한 분기 값인지 확인 (1, 2, 3, 4 중 하나여야 함)
-        if quarter is not None and quarter not in [1, 2, 3, 4]:
-            return jsonify({"error": "Invalid quarter value. Quarter must be 1, 2, 3, or 4."}), 400
-
-        # 대접근 이벤트 예측 호출 (분기 값에 따라 호출 방식 변경)
-        result = predict_opposition_events_with_visibility(planet_name, year, latitude, longitude, quarter)
+        # 대접근 이벤트 예측 호출
+        result = predict_opposition_events(planet_name, year)
 
         return jsonify(result)
 
@@ -184,35 +177,10 @@ def get_opposition_event():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/calculate_store_event', methods=['GET'])
-def calculate_store_event_endpoint():
+@main.route('/api/update_raw_data', methods=['POST'])
+def update_opposition_events():
     try:
-        planet_name = request.args.get('planet_name')
-        start_date_str = request.args.get('start_date')
-        end_date_str = request.args.get('end_date')
-
-        if not planet_name or not start_date_str or not end_date_str:
-            return jsonify({"error": "Missing required parameters."}), 400
-
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-
-        calculate_and_store_opposition_event(planet_name, start_date, end_date)
-
-        return jsonify({'message': 'Planet event data stored successfully'}), 200
+        update_raw_data()
+        return jsonify({"message": "Opposition events data update started successfully."}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-
-@main.route('/fetch_event', methods=['GET'])
-def fetch_event_endpoint():
-    try:
-        planet_name = request.args.get('planet_name')
-        target_date = datetime.strptime(request.args.get('target_date'), '%Y-%m-%d')
-        event = fetch_stored_event(planet_name, target_date)
-        if event:
-            return jsonify(event), 200
-        else:
-            return jsonify({'message': 'No event found'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 500

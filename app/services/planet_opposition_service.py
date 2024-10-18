@@ -1,92 +1,103 @@
 # services/planet_opposition_service.py
 
 from datetime import datetime
-from app.services.planet_visibility_service import calculate_planet_info
+from app.services.planet_visibility_service import get_db_planet_code
 import logging
+
+from global_db_connection import get_db_connection
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_quarter_ranges(year):
-    """
-    주어진 연도를 4분기로 나누어 각 분기의 시작과 끝 날짜를 반환하는 함수
-    """
-    return [
-        (datetime(year, 1, 1), datetime(year, 3, 31)),  # Q1
-        (datetime(year, 4, 1), datetime(year, 6, 30)),  # Q2
-        (datetime(year, 7, 1), datetime(year, 9, 30)),  # Q3
-        (datetime(year, 10, 1), datetime(year, 12, 31))  # Q4
-    ]
+# 행성별 대접근 기준 AU 값을 정의하는 매핑 함수
+def get_opposition_au_threshold(planet_name, strict=False):
+    opposition_au_thresholds = {
+        "Mercury": (0.56, 0.60),
+        "Venus": (0.30, 0.50),
+        "Mars": (0.643, 0.70),
+        "Jupiter": (4.1, 4.4),
+        "Saturn": (8.33, 8.66),
+        "Uranus": (18.40, 18.60),
+        "Neptune": (28.87, 28.90),
+        "Pluto": (34.1, 34.8)
+    }
+    return opposition_au_thresholds.get(planet_name, (None, None))[0 if strict else 1]
 
 
-def predict_opposition_events_with_visibility(planet_name, year, latitude, longitude, quarter=None):
-    # 4분기로 나누기
-    quarter_ranges = get_quarter_ranges(year)
-
-    # 특정 분기 요청이 있는 경우 해당 분기만 사용
-    if quarter:
-        if quarter < 1 or quarter > 4:
-            return {"error": "Invalid quarter. Please specify a value between 1 and 4."}
-        quarter_ranges = [quarter_ranges[quarter - 1]]
-
+def predict_opposition_events(planet_name, year, strict=False):
     events_list = []
 
-    # 첫 분기에서 타임존 정보 한 번 호출하여 캐시
-    first_quarter_start, first_quarter_end = quarter_ranges[0]
-    initial_visibility_info = calculate_planet_info(
-        planet_name, latitude, longitude, first_quarter_start,
-        range_days=(first_quarter_end - first_quarter_start).days + 1
-    )
+    # 연도의 시작과 끝 날짜 설정 (화성과 금성의 경우 2년치 데이터를 조회)
+    if planet_name in ["Mars", "Venus"]:
+        year_start_date = datetime(year, 1, 1)
+        year_end_date = datetime(year + 1, 12, 31)
+    else:
+        year_start_date = datetime(year, 1, 1)
+        year_end_date = datetime(year, 12, 31)
 
-    # 타임존 정보를 얻을 수 없는 경우 오류 반환
-    if not initial_visibility_info or "error" in initial_visibility_info[0]:
-        return {"error": "Failed to calculate visibility for initial quarter."}
+    # DB에서 대접근 이벤트를 찾기 위해 데이터 조회
+    conn = get_db_connection()
+    if conn is None:
+        return {"error": "Failed to connect to the database."}
 
-    # 타임존 정보 캐시
-    timezone_info = {
-        'timeZoneId': initial_visibility_info[0]['timeZoneId'],
-        'offset_sec': initial_visibility_info[0]['offset_sec']
-    }
+    cursor = None
+    try:
+        cursor = conn.cursor()
 
-    # 각 분기에 대해 가시성 정보를 요청하고 가장 가까운 날짜 찾기
-    for start_date, end_date in quarter_ranges:
-        visibility_info = calculate_planet_info(
-            planet_name, latitude, longitude, start_date,
-            range_days=(end_date - start_date).days + 1,
-            timezone_info=timezone_info  # 캐시된 타임존 정보 전달
-        )
+        # 두 해에 걸친 데이터를 UNION으로 결합하기 위해 테이블 설정
+        if planet_name in ["Mars", "Venus"]:
+            table_name_1 = f"{planet_name.lower()}_{year}_raw_data"
+            table_name_2 = f"{planet_name.lower()}_{year + 1}_raw_data"
 
-        if not visibility_info or "error" in visibility_info[0]:
-            continue
+            select_query = f"""
+                SELECT reg_date, distance, s_o_t FROM (
+                    SELECT * FROM {table_name_1}
+                    UNION ALL
+                    SELECT * FROM {table_name_2}
+                ) AS combined_data
+                WHERE planet_code = %s AND reg_date BETWEEN %s AND %s AND distance <= %s
+                ORDER BY distance ASC
+                LIMIT 5
+            """
+        else:
+            table_name = f"{planet_name.lower()}_{year}_raw_data"
+            select_query = f"""
+                SELECT reg_date, distance, s_o_t FROM {table_name}
+                WHERE planet_code = %s AND reg_date BETWEEN %s AND %s AND distance <= %s
+                ORDER BY distance ASC
+                LIMIT 5
+            """
 
-        # 각 분기에서 가장 가까운 날짜 3일을 찾기 위해 상위 3개의 최소 거리를 추적
-        sorted_visibility_info = sorted(
-            visibility_info,
-            key=lambda x: float(x.get('distance_to_earth', 'inf').split()[0])
-            if 'distance_to_earth' in x else float('inf')
-        )
+        planet_code = get_db_planet_code(planet_name)
+        threshold_strict = get_opposition_au_threshold(planet_name, strict=True)
+        cursor.execute(select_query,
+                       (planet_code, year_start_date, year_end_date, get_opposition_au_threshold(planet_name, strict)))
+        rows = cursor.fetchall()
 
-        closest_events = sorted_visibility_info[:3]  # 가장 가까운 상위 3일 선택
+        if not rows:
+            return {"error": "No opposition events found for the requested year."}
 
-        for closest_event in closest_events:
+        for closest_event in rows:
+            reg_date, distance, s_o_t = closest_event
+            event_type = "planet big approach" if distance <= threshold_strict else "planet approach"
             events_list.append({
                 "planet": planet_name,
-                "closest_date": closest_event.get("date", "N/A"),
-                "distance_to_earth": closest_event.get("distance_to_earth", "N/A"),
-                "sun_observer_target_angle": closest_event.get("sun_observer_target_angle", "N/A"),
-                "visibility": {
-                    "best_time": closest_event.get("best_time", "N/A"),
-                    "visible": closest_event.get("visible", False),
-                    "right_ascension": closest_event.get("right_ascension", "N/A"),
-                    "declination": closest_event.get("declination", "N/A"),
-                    "visibility_judgment": closest_event.get("visibility_judgment", "N/A")
-                },
-                "timeZoneId": timezone_info['timeZoneId'],
-                "offset_sec": timezone_info['offset_sec']
+                "closest_date": reg_date.strftime("%Y-%m-%d"),
+                "distance_to_earth": f"{distance:.4f} AU",
+                "sun_observer_target_angle": f"{s_o_t:.2f}°",
+                "event_type": event_type
             })
 
-    return events_list if events_list else {"error": "No opposition events found for the requested quarter or year."}
+    except Exception as e:
+        return {"error": f"Database operation failed: {e}"}
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return events_list if events_list else {"error": "No opposition events found for the requested year."}
 
 
-__all__ = ['predict_opposition_events_with_visibility']
+__all__ = ['predict_opposition_events']

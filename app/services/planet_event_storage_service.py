@@ -1,143 +1,98 @@
 # services/planet_event_storage_service.py
 
+from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
 import logging
-from datetime import datetime, timedelta
-from app.services.horizons_service import get_planet_position_from_horizons
-import calendar
 from global_db_connection import get_db_connection
+from app.services.planet_visibility_service import get_db_planet_code
+from app.services.horizons_service import get_planet_position_from_horizons
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def store_planet_event(planet_name, event_date, distance):
-    logging.info("===================store_planet_event 시작=======================")
-    # 날짜 데이터 포맷팅
-    db_date = str(event_date.strftime('%Y-%m-%d'))
+def update_raw_data():
+    """
+    모든 행성에 대해 현재 연도와 다음 연도의 대접근 이벤트 데이터를 업데이트하는 함수
+    """
+    planets = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+    current_year = datetime.now().year + 2
 
-    # 테이블 이름 동적 생성
-    year = event_date.year
-    table_name = f"{planet_name.lower()}_{year}_opposition_events"
-
-    # 전역 DB 연결 가져오기
+    # DB 연결 가져오기
     conn = get_db_connection()
     if conn is None:
-        logging.error("DB 연결을 사용할 수 없습니다.")
+        logging.error("Failed to connect to the database.")
         return
 
     cursor = None
     try:
         cursor = conn.cursor()
-        insert_query = f'''
-            INSERT INTO {table_name} (planet_code, reg_date, distance)
-            VALUES (%s, %s, %s)
-        '''
-        planet_code = get_planet_code(planet_name)  # 행성 코드 가져오기
-        cursor.execute(insert_query, (planet_code, db_date, distance))
-        conn.commit()
-        logging.info("데이터 저장 성공")
-    except Exception as e:
-        logging.error(f"==DB 작업 중 에러 발생==: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        logging.info("===================store_planet_event 끝=======================")
-
-
-def fetch_stored_event(planet_name, target_date):
-    logging.info("===================fetch_stored_event 시작======================")
-    # 날짜 데이터 포맷팅
-    db_date = target_date.strftime('%Y-%m-%d')
-
-    # 테이블 이름 동적 생성
-    year = target_date.year
-    table_name = f"{planet_name.lower()}_{year}_opposition_events"
-
-    # 전역 DB 연결 가져오기
-    conn = get_db_connection()
-    if conn is None:
-        logging.error("DB 연결을 사용할 수 없습니다.")
-        return
-
-    cursor = None
-    row = None
-    try:
-        select_query = f'''
-            SELECT reg_date, distance FROM {table_name}
-            WHERE planet_code = %s AND reg_date = %s
-        '''
-        planet_code = get_planet_code(planet_name)  # 행성 코드 가져오기
-        cursor = conn.cursor()
-        cursor.execute(select_query, (planet_code, db_date))
-        row = cursor.fetchone()
-        if row:
-            logging.info(f"검색된 데이터: {row}")
-        else:
-            logging.info("해당 날짜에 대한 데이터 없음")
-    except Exception as e:
-        logging.error(f"DB 작업 중 에러 발생: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        logging.info("===================fetch_stored_event 끝=======================")
-
-    if row:
-        return {
-            'planet_name': planet_name,
-            'reg_date': row[0],
-            'distance': row[1]
-        }
-    return None
-
-
-def get_planet_code(planet_name):
-    planet_codes = {
-        "Mercury": 199,
-        "Venus": 299,
-        "Earth": 399,
-        "Mars": 499,
-        "Jupiter": 599,
-        "Saturn": 699,
-        "Uranus": 799,
-        "Neptune": 899,
-        "Pluto": 999
-    }
-    return planet_codes.get(planet_name)
-
-
-def calculate_and_store_opposition_event(planet_name, start_date, end_date):
-    logging.info("===================calculate_and_store_opposition_event 시작======================")
-    current_date = start_date
-
-    while current_date <= end_date:
-        year = current_date.year
-        month = current_date.month
-        last_day_of_month = calendar.monthrange(year, month)[1]
-        month_end_date = current_date.replace(day=last_day_of_month)
-
-        if month_end_date > end_date:
-            month_end_date = end_date
-
-        planet_data = get_planet_position_from_horizons(planet_name, current_date, (month_end_date - current_date).days)
-
-        if 'error' in planet_data:
-            logging.error("Horizons API 데이터 가져오기 실패")
-            raise ValueError("Failed to retrieve planet data from Horizons API.")
-
-        horizons_data = planet_data.get('data')
-        if not horizons_data:
-            logging.error("Horizons API로부터 유효한 데이터 없음")
-            raise ValueError("No valid data from Horizons API.")
-
-        for day_data in horizons_data:
+        for planet in planets:
             try:
-                delta = float(day_data['delta'])
-                reg_date = datetime.strptime(day_data['time'], '%Y-%b-%d %H:%M')
-                store_planet_event(planet_name, reg_date, delta)
-            except ValueError as e:
-                logging.error(f"데이터 변환 오류: {e}, 원본 데이터: {day_data}")
-                continue
+                # 모든 행성에 대해 현재 연도와 다음 연도의 대접근 이벤트를 업데이트
+                years_to_update = [current_year, current_year + 1]
 
-        current_date = month_end_date + timedelta(days=1)
+                for year in years_to_update:
+                    logging.info(f"Updating raw data for {planet} for the year {year}")
 
-    logging.info("===================calculate_and_store_opposition_event 끝======================")
+                    # Horizons API를 사용해 해당 연도의 데이터 가져오기
+                    year_start_date = datetime(year, 1, 1)
+                    year_end_date = datetime(year, 12, 31)
+                    planet_data = get_planet_position_from_horizons(planet, year_start_date, (year_end_date - year_start_date).days)
+
+                    if 'error' in planet_data:
+                        logging.error(f"Failed to retrieve planet data from Horizons API for {planet}: {planet_data['error']}")
+                        continue
+
+                    horizons_data = planet_data.get('data')
+                    if not horizons_data:
+                        logging.error(f"No valid data from Horizons API for {planet} in year {year}.")
+                        continue
+
+                    # 가져온 데이터를 저장
+                    table_name = f"{planet.lower()}_{year}_raw_data"
+                    create_table_query = f"""
+                        CREATE TABLE IF NOT EXISTS {table_name} (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            planet_code INT NOT NULL,
+                            reg_date DATE NOT NULL,
+                            distance DOUBLE NOT NULL,
+                            s_o_t DOUBLE NOT NULL,
+                            right_ascension VARCHAR(20),
+                            declination VARCHAR(20)
+                        )
+                    """
+                    cursor.execute(create_table_query)
+
+                    insert_query = f"""
+                        INSERT INTO {table_name} (planet_code, reg_date, distance, s_o_t, right_ascension, declination)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                    for day_data in horizons_data:
+                        reg_date = datetime.strptime(day_data["time"], '%Y-%b-%d %H:%M')
+                        cursor.execute(insert_query, (
+                            get_db_planet_code(planet),
+                            reg_date,
+                            float(day_data.get('delta')),
+                            float(day_data.get('s-o-t')),
+                            day_data.get('ra'),
+                            day_data.get('dec')
+                        ))
+
+                    conn.commit()
+
+            except Exception as e:
+                logging.error(f"Failed to update raw data for {planet}: {e}")
+
+    except Exception as e:
+        logging.error(f"Database operation failed: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        conn.close()
+
+
+# 스케줄링 설정
+scheduler = BackgroundScheduler()
+scheduler.add_job(update_raw_data, 'cron', month='1', day='1', hour='0', minute='0')
+scheduler.start()
