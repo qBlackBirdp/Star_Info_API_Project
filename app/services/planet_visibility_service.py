@@ -1,15 +1,12 @@
 # services/planet_visibility_service.py
 
 from datetime import datetime, timedelta
-
 from skyfield import almanac
 from skyfield.api import Topos
-
 from app.global_resources import ts, planets  # 전역 리소스 임포트
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range  # 일출 및 일몰 계산 함수 import
 from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
 from global_db_connection import get_db_connection
-from app.services.horizons_service import get_planet_position_from_horizons
 
 
 # Skyfield에서 사용하는 행성 이름과 코드 간의 매핑
@@ -28,7 +25,7 @@ def get_skyfield_planet_code(planet_name):
     return planet_name_map.get(planet_name)
 
 
-# DB에 저장할 행성 코드와 이름 간의 매핑
+# DB에 사용할 행성 코드와 이름 간의 매핑
 def get_db_planet_code(planet_name):
     planet_name_map = {
         "Mercury": 199,
@@ -70,11 +67,6 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
     if not sunrise_sunset_data_list or "error" in sunrise_sunset_data_list[0]:
         return [{"error": "Failed to calculate sunrise or sunset."}]
 
-    # DB에 저장할 행성 코드로 변환
-    planet_code = get_db_planet_code(planet_name)
-    if not planet_code:
-        return [{"error": f"Invalid planet name: {planet_name}"}]
-
     # Skyfield에서 사용할 행성 이름으로 변환
     skyfield_planet_code = get_skyfield_planet_code(planet_name)
     if not skyfield_planet_code:
@@ -88,90 +80,88 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
     if conn is None:
         return [{"error": "Failed to connect to the database."}]
 
-    # DB 연결 가져오기 및 필요한 테이블 생성 코드 추가
+    # DB에서 데이터 조회
     cursor = None
     try:
         cursor = conn.cursor()
-        # 테이블 생성 확인 및 생성
-        table_name = f"{planet_name.lower()}_{date.year}_opposition_events"
-        create_table_query = f"""
-            CREATE TABLE IF NOT EXISTS {table_name} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                planet_code INT NOT NULL,
-                reg_date DATE NOT NULL,
-                distance DOUBLE NOT NULL,
-                s_o_t DOUBLE NOT NULL,
-                right_ascension VARCHAR(20),
-                declination VARCHAR(20)
-            )
-        """
-        cursor.execute(create_table_query)
-
         # 데이터 조회 쿼리 추가
+        table_name = f"{planet_name.lower()}_{date.year}_raw_data"
         select_query = f"""
-            SELECT reg_date, distance, s_o_t, right_ascension, declination FROM {table_name}
+            SELECT reg_date, distance, s_o_t FROM {table_name}
             WHERE planet_code = %s AND reg_date BETWEEN %s AND %s
         """
-        cursor.execute(select_query, (planet_code, date, end_date))
+        cursor.execute(select_query, (get_db_planet_code(planet_name), date, end_date))
         rows = cursor.fetchall()
 
         if not rows:
-            # 해당 연도 데이터가 없는 경우 Horizons API 요청
-            year_start_date = datetime(date.year, 1, 1)
-            year_end_date = datetime(date.year, 12, 31)
-
-            planet_data = get_planet_position_from_horizons(planet_name, year_start_date,
-                                                            (year_end_date - year_start_date).days)
-            if 'error' in planet_data:
-                return [{"error": f"Failed to retrieve planet data from Horizons API for {planet_name}"}]
-
-            horizons_data = planet_data.get('data')
-            if not horizons_data:
-                return [{"error": "No valid data from Horizons API."}]
-
-            # 가져온 데이터를 저장
-            insert_query = f"""
-                INSERT INTO {table_name} (planet_code, reg_date, distance, s_o_t, right_ascension, declination)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            for day_data in horizons_data:
-                reg_date = datetime.strptime(day_data["time"], '%Y-%b-%d %H:%M')
-                cursor.execute(insert_query, (
-                    planet_code, reg_date, day_data.get('delta'), day_data.get('s-o-t'),
-                    day_data.get('ra'), day_data.get('dec')
-                ))
-
-            conn.commit()
-
-            # 저장 후 데이터 조회
-            cursor.execute(select_query, (planet_code, date, end_date))
-            rows = cursor.fetchall()
+            return [{"error": f"No data available for {planet_name} in the specified date range."}]
 
         results = []
 
         for row, sunrise_sunset_data in zip(rows, sunrise_sunset_data_list):
-            reg_date, delta, s_o_t, ra, dec = row
+            reg_date, delta, s_o_t = row
 
             t0 = ts.utc(reg_date.year, reg_date.month, reg_date.day, 0, 0, 0)
             t1 = ts.utc(reg_date.year, reg_date.month, reg_date.day, 23, 59, 59)
             times, is_visible = almanac.find_discrete(t0, t1, almanac.risings_and_settings(planets, planet, location))
 
-            # 가시성 판단 추가 로직
+            # 가시성 판단 추가 로직 (고도를 고려)
             visible = False
             best_time = None
+
+            # 행성의 고도와 방위각 계산
+            apparent = (planets['earth'] + location).at(t0).observe(planet).apparent()
+            alt, az, _ = apparent.altaz()
+            altitude = alt.degrees
+
             for t, visible_event in zip(times, is_visible):
                 if visible_event == 1:  # 행성이 떠오르는 시간
-                    visible = True
-                    best_time = convert_utc_to_local_time(t.utc_datetime(), timezone_info['offset_sec']).time()
+                    # 고도가 0 이상일 때만 visible로 설정
+                    if altitude >= 0:
+                        visible = True
+                        best_time = convert_utc_to_local_time(t.utc_datetime(), timezone_info['offset_sec']).time()
                     break
 
-            # 일출 및 일몰 시간과 비교하여 관측 가능 여부 결정
+            # 고도와 일출/일몰 시간에 따라 visibility_judgment 설정
             sunrise_time = datetime.fromisoformat(sunrise_sunset_data['sunrise']).time()
             sunset_time = datetime.fromisoformat(sunrise_sunset_data['sunset']).time()
-            if best_time and (best_time < sunrise_time or best_time > sunset_time):
-                visibility_judgment = f"Difficult to observe without special equipment (Best time: {best_time})"
+
+            if best_time:
+                if best_time > sunset_time or best_time < sunrise_time:
+                    # 일몰 이후 또는 일출 이전이라면
+                    if altitude >= 45:
+                        visibility_judgment = "Good visibility - The planet is high in the sky and it's dark enough for easy observation."
+                    else:
+                        visibility_judgment = "Difficult to observe - The planet is visible, but it is low in the sky, making it harder to see."
+                else:
+                    # 일출 이후 일몰 이전
+                    if altitude >= 45:
+                        visibility_judgment = "Difficult to observe - The planet is high, but daylight might make it challenging to see."
+                    else:
+                        visibility_judgment = "Not recommended - The planet is low in the sky and daylight makes it very hard to observe."
             else:
-                visibility_judgment = "Good visibility"
+                visibility_judgment = "No optimal observation time available."
+
+            # 방위각을 동서남북 방향으로 변환
+            azimuth = az.degrees
+            if 0 <= azimuth < 22.5 or 337.5 <= azimuth <= 360:
+                direction = "North"
+            elif 22.5 <= azimuth < 67.5:
+                direction = "Northeast"
+            elif 67.5 <= azimuth < 112.5:
+                direction = "East"
+            elif 112.5 <= azimuth < 157.5:
+                direction = "Southeast"
+            elif 157.5 <= azimuth < 202.5:
+                direction = "South"
+            elif 202.5 <= azimuth < 247.5:
+                direction = "Southwest"
+            elif 247.5 <= azimuth < 292.5:
+                direction = "West"
+            elif 292.5 <= azimuth < 337.5:
+                direction = "Northwest"
+            else:
+                direction = "Unknown"
 
             results.append({
                 "date": reg_date.strftime("%Y-%m-%d"),
@@ -180,10 +170,11 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
                 "timeZoneId": timezone_info['timeZoneId'],
                 "offset_sec": timezone_info['offset_sec'],
                 "distance_to_earth": f"{delta:.4f} AU" if delta else "N/A",
-                "sun_observer_target_angle": f"{s_o_t:.2f}°" if s_o_t else "N/A",
-                "right_ascension": ra if ra else "N/A",
-                "declination": dec if dec else "N/A",
-                "visibility_judgment": visibility_judgment
+                "altitude": f"{altitude:.2f}°",
+                "azimuth": direction,
+                "visibility_judgment": visibility_judgment,
+                "sunrise": sunrise_sunset_data['sunrise'],
+                "sunset": sunrise_sunset_data['sunset']
             })
 
     except Exception as e:
@@ -193,4 +184,3 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
             cursor.close()
 
     return results
-

@@ -57,16 +57,14 @@ def update_raw_data():
                             planet_code INT NOT NULL,
                             reg_date DATE NOT NULL,
                             distance DOUBLE NOT NULL,
-                            s_o_t DOUBLE NOT NULL,
-                            right_ascension VARCHAR(20),
-                            declination VARCHAR(20)
+                            s_o_t DOUBLE NOT NULL
                         )
                     """
                     cursor.execute(create_table_query)
 
                     insert_query = f"""
-                        INSERT INTO {table_name} (planet_code, reg_date, distance, s_o_t, right_ascension, declination)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        INSERT INTO {table_name} (planet_code, reg_date, distance, s_o_t)
+                        VALUES (%s, %s, %s, %s)
                     """
                     for day_data in horizons_data:
                         reg_date = datetime.strptime(day_data["time"], '%Y-%b-%d %H:%M')
@@ -74,9 +72,7 @@ def update_raw_data():
                             get_db_planet_code(planet),
                             reg_date,
                             float(day_data.get('delta')),
-                            float(day_data.get('s-o-t')),
-                            day_data.get('ra'),
-                            day_data.get('dec')
+                            float(day_data.get('s-o-t'))
                         ))
 
                     conn.commit()
