@@ -1,6 +1,4 @@
-# get_timezone_info.py
 from datetime import datetime
-
 import requests
 import os
 import logging
@@ -9,6 +7,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# 타임존 정보 캐시
+cached_timezone_info = {}
+
 
 def get_timezone_info(lat, lon, timestamp):
     print("============get_timezone_info 작동===============")
@@ -16,8 +17,13 @@ def get_timezone_info(lat, lon, timestamp):
     if not api_key:
         raise ValueError("Google Time Zone API key is not set in environment variables.")
 
-    base_url = "https://maps.googleapis.com/maps/api/timezone/json"
+    # 캐싱된 값이 있는지 확인
+    cache_key = (lat, lon, timestamp)
+    if cache_key in cached_timezone_info:
+        logger.info(f"Using cached timezone info for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
+        return cached_timezone_info[cache_key]
 
+    base_url = "https://maps.googleapis.com/maps/api/timezone/json"
     params = {
         'location': f'{lat},{lon}',
         'timestamp': timestamp,
@@ -29,7 +35,9 @@ def get_timezone_info(lat, lon, timestamp):
     response = requests.get(base_url, params=params)
 
     if response.status_code == 200:
-        return response.json()
+        timezone_data = response.json()
+        cached_timezone_info[cache_key] = timezone_data  # 응답을 캐시에 저장
+        return timezone_data
     else:
         raise Exception(f"API request failed with status code {response.status_code}: {response.text}")
 

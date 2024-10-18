@@ -165,13 +165,18 @@ def get_opposition_event():
         year = request.args.get('year', type=int)
         latitude = request.args.get('latitude', type=float)
         longitude = request.args.get('longitude', type=float)
+        quarter = request.args.get('quarter', type=int, default=None)
 
         # 필수 매개변수 검증
         if not planet_name or not year or latitude is None or longitude is None:
             return jsonify({"error": "Missing required parameters."}), 400
 
-        # 대접근 이벤트 예측 호출
-        result = predict_opposition_events_with_visibility(planet_name, year, latitude, longitude)
+        # 유효한 분기 값인지 확인 (1, 2, 3, 4 중 하나여야 함)
+        if quarter is not None and quarter not in [1, 2, 3, 4]:
+            return jsonify({"error": "Invalid quarter value. Quarter must be 1, 2, 3, or 4."}), 400
+
+        # 대접근 이벤트 예측 호출 (분기 값에 따라 호출 방식 변경)
+        result = predict_opposition_events_with_visibility(planet_name, year, latitude, longitude, quarter)
 
         return jsonify(result)
 

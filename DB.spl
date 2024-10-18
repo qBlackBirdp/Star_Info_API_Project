@@ -29,7 +29,9 @@ CREATE TABLE mercury_2024_opposition_events (
                                                 planet_code INT NOT NULL,
                                                 reg_date DATE NOT NULL,
                                                 distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
+                                                s_o_t DOUBLE NOT NULL,
+                                                right_ascension VARCHAR(20),
+                                                declination VARCHAR(20)
 );
 
 -- 금성 (Venus, 행성 코드: 299)
@@ -38,7 +40,9 @@ CREATE TABLE venus_2024_opposition_events (
                                               planet_code INT NOT NULL,
                                               reg_date DATE NOT NULL,
                                               distance DOUBLE NOT NULL,
-                                              s_o_t DOUBLE NOT NULL
+                                              s_o_t DOUBLE NOT NULL,
+                                              right_ascension VARCHAR(20),
+                                              declination VARCHAR(20)
 );
 
 -- 화성 (Mars, 행성 코드: 499)
@@ -47,7 +51,9 @@ CREATE TABLE mars_2024_opposition_events (
                                              planet_code INT NOT NULL,
                                              reg_date DATE NOT NULL,
                                              distance DOUBLE NOT NULL,
-                                             s_o_t DOUBLE NOT NULL
+                                             s_o_t DOUBLE NOT NULL,
+                                             right_ascension VARCHAR(20),
+                                             declination VARCHAR(20)
 );
 
 -- 목성 (Jupiter, 행성 코드: 599)
@@ -56,7 +62,9 @@ CREATE TABLE jupiter_2024_opposition_events (
                                                 planet_code INT NOT NULL,
                                                 reg_date DATE NOT NULL,
                                                 distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
+                                                s_o_t DOUBLE NOT NULL,
+                                                right_ascension VARCHAR(20),
+                                                declination VARCHAR(20)
 );
 
 -- 토성 (Saturn, 행성 코드: 699)
@@ -65,7 +73,9 @@ CREATE TABLE saturn_2024_opposition_events (
                                                planet_code INT NOT NULL,
                                                reg_date DATE NOT NULL,
                                                distance DOUBLE NOT NULL,
-                                               s_o_t DOUBLE NOT NULL
+                                               s_o_t DOUBLE NOT NULL,
+                                               right_ascension VARCHAR(20),
+                                               declination VARCHAR(20)
 );
 
 -- 천왕성 (Uranus, 행성 코드: 799)
@@ -74,7 +84,9 @@ CREATE TABLE uranus_2024_opposition_events (
                                                planet_code INT NOT NULL,
                                                reg_date DATE NOT NULL,
                                                distance DOUBLE NOT NULL,
-                                               s_o_t DOUBLE NOT NULL
+                                               s_o_t DOUBLE NOT NULL,
+                                               right_ascension VARCHAR(20),
+                                               declination VARCHAR(20)
 );
 
 -- 해왕성 (Neptune, 행성 코드: 899)
@@ -83,7 +95,9 @@ CREATE TABLE neptune_2024_opposition_events (
                                                 planet_code INT NOT NULL,
                                                 reg_date DATE NOT NULL,
                                                 distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
+                                                s_o_t DOUBLE NOT NULL,
+                                                right_ascension VARCHAR(20),
+                                                declination VARCHAR(20)
 );
 
 -- 명왕성 (Pluto, 행성 코드: 999)
@@ -92,8 +106,11 @@ CREATE TABLE pluto_2024_opposition_events (
                                               planet_code INT NOT NULL,
                                               reg_date DATE NOT NULL,
                                               distance DOUBLE NOT NULL,
-                                              s_o_t DOUBLE NOT NULL
+                                              s_o_t DOUBLE NOT NULL,
+                                              right_ascension VARCHAR(20),
+                                              declination VARCHAR(20)
 );
+
 
 -- 수성 테이블 조회
 SELECT * FROM mercury_2024_opposition_events;

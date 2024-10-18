@@ -97,10 +97,10 @@ def get_planet_position_from_horizons(planet_name, date, range_days):
                 parsed_data = []
                 extracting = False
                 for line in result_lines:
-                    if "$$SOE" in line:
+                    if "$SOE" in line:
                         extracting = True
                         continue
-                    elif "$$EOE" in line:
+                    elif "$EOE" in line:
                         extracting = False
                         break
                     if extracting:
@@ -116,7 +116,6 @@ def get_planet_position_from_horizons(planet_name, date, range_days):
                         "ra": f"{parts[2]} {parts[3]} {parts[4]}",
                         "dec": f"{parts[5]} {parts[6]} {parts[7]}",
                         "delta": parts[8],
-                        "deldot": parts[9],
                         "s-o-t": parts[10]
                     })
                 # print(f"Parsed Dictionary: {parsed_dict}")  # 딕셔너리 형태의 파싱 데이터 로그
