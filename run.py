@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # 애플리케이션 실행
     try:
         logger.info("Starting Flask application")
-        app.run(host='0.0.0.0', port=5000)
+        app.run(host='0.0.0.0', port=5000, debug=True)
     except Exception as e:
         logger.critical(f"Failed to run Flask application: {e}", exc_info=True)
         raise

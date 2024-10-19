@@ -1,10 +1,13 @@
 # services/constellation_service.py
+import logging
 
 from skyfield.api import Topos, N, E, position_of_radec
 from app.global_resources import ts, planets, earth, constellation_map  # 전역 리소스 임포트
 from app.services.timezone_conversion_service import convert_local_to_utc_time  # 시간 변환 함수 import
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range  # 일출 및 일몰 계산 함수 import
 from datetime import datetime
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def get_constellations_for_date_range(latitude, longitude, start_date, end_date):
@@ -53,12 +56,15 @@ def get_constellations_for_date_range(latitude, longitude, start_date, end_date)
             position = position_of_radec(ra.hours, dec.degrees)
             constellation_name = constellation_map(position)
 
+            # 적경과 적위를 데이터에 추가
             constellation_data.append({
                 "date": date.strftime('%Y-%m-%d'),
                 "constellation": constellation_name,
                 "sunrise": day_data["sunrise"],
                 "sunset": day_data["sunset"],
-                "offset": offset_sec
+                "offset": offset_sec,
+                "ra_deg": ra.hours * 15,  # 적경 정보를 도(degree)로 변환하여 추가
+                "dec_deg": dec.degrees  # 적위 정보를 추가
             })
 
         except Exception as e:
@@ -67,6 +73,7 @@ def get_constellations_for_date_range(latitude, longitude, start_date, end_date)
                 "date": day_data["date"],  # 여기서 day_data["date"]를 직접 사용하여 초기화된 값을 참조
                 "error": f"Failed to calculate constellation: {str(e)}"
             })
+    logging.debug(f"Constellation Data to Return: {constellation_data}")
 
     return constellation_data
 

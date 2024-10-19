@@ -1,5 +1,4 @@
 # 모든 API 엔드포인트 정의
-
 # app/routes.py
 
 from flask import Blueprint, jsonify, request
@@ -9,7 +8,7 @@ from .services.constellation_service import get_constellations_for_date_range
 from .services.planet_visibility_service import calculate_planet_info
 from .services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
 from .services.planet_event_storage_service import update_raw_data
-from .services.constellation_visibility_service import get_best_visibility_time_for_constellation
+from .services.constellation_visibility_service import calculate_visibility_for_constellations_parallel
 from .services.planet_opposition_service import predict_opposition_events
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
@@ -68,6 +67,7 @@ def get_constellations():
     """
     사용자가 요청한 위도, 경도, 날짜 범위에 따라 별자리 정보를 반환하는 API 엔드포인트
     """
+    print("=============별자리 로직 요청 받음==============")
     params, error_response, status_code = get_validated_params()
     if error_response:
         return jsonify(error_response), status_code
@@ -77,25 +77,13 @@ def get_constellations():
     try:
         # 별자리 정보 계산 (날짜 범위에 대해 한 번만 호출)
         constellation_data = get_constellations_for_date_range(latitude, longitude, start_date, end_date)
+        print(f"Constellation Data after range calculation: {constellation_data}")
 
         # 각 별자리에 대해 가시성이 가장 좋은 시간대 계산
-        for day in constellation_data:
-            if "constellation" in day and "error" not in day:
-                constellation_name = day["constellation"]
-                best_visibility = get_best_visibility_time_for_constellation([day], latitude, longitude,
-                                                                             constellation_name)
-                if best_visibility and "best_visibility_time" in best_visibility[0]:
-                    day.update({
-                        "best_visibility_time": best_visibility[0]["best_visibility_time"],
-                        "max_altitude": best_visibility[0]["max_altitude"]
-                    })
-                else:
-                    day.update({
-                        "best_visibility_time": "N/A",
-                        "max_altitude": "N/A"
-                    })
+        constellation_data = calculate_visibility_for_constellations_parallel(constellation_data, latitude, longitude)
 
     except Exception as e:
+        print(f"Error calculating constellations: {str(e)}")
         return jsonify({"error": f"Failed to calculate constellations: {str(e)}"}), 500
 
     # 최종 결과를 JSON으로 반환
