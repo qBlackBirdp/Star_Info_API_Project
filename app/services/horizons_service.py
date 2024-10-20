@@ -96,7 +96,7 @@ def get_comet_record_number(comet_name):
 
             # 각 줄을 출력하여 확인
             for line in result_lines:
-                print(f"Line: {line}")  # 각 줄을 로그로 출력
+                # print(f"Line: {line}")  # 각 줄을 로그로 출력
 
                 # 레코드 번호가 있는 줄을 식별
                 parts = line.split()
@@ -174,14 +174,22 @@ def get_comet_approach_events(comet_name, date, range_days):
                 parsed_dict = []
                 for entry in parsed_data:
                     parts = entry.split()
-                    parsed_dict.append({
-                        "time": f"{parts[0]} {parts[1]}",  # TIME
-                        "ra": f"{parts[2]} {parts[3]} {parts[4]}",  # Right Ascension (RA)
-                        "dec": f"{parts[5]} {parts[6]} {parts[7]}",  # Declination (DEC)
-                        "delta": parts[8],  # Solar distance
-                        "deldot": parts[9],  # Radial velocity
-                        "s-o-t": parts[10]  # Sun-Observer-Target angle
-                    })
+                    if len(parts) >= 11:  # Ensure there are enough parts to parse correctly
+                        parsed_dict.append({
+                            "time": f"{parts[0]} {parts[1]}",  # TIME
+                            "ra": f"{parts[2]} {parts[3]} {parts[4]}",  # Right Ascension (RA)
+                            "dec": f"{parts[5]} {parts[6]} {parts[7]}",  # Declination (DEC)
+                            "delta": parts[14],  # Solar distance
+                            "deldot": parts[15],  # Radial velocity
+                            "s-o-t": parts[16]  # Sun-Observer-Target angle
+                        })
+                    else:
+                        print(f"Skipping line due to unexpected format: {entry}")
+
+                print("Parsed Data:")
+                for item in parsed_dict:
+                    print(item)
+
                 return {"data": parsed_dict}
             else:
                 return {"error": "Unexpected response format from Horizons API."}
