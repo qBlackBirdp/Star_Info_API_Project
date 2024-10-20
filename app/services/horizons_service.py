@@ -63,7 +63,7 @@ COMET_CODES = {
     # "Kohoutek": "75P",  # 코후테크 혜성 (주기: 약 6.4년)
     "Wild 2": "81P",  # 와일드 2 혜성 (주기: 약 6.4년)
     # "Russell 2": "89P",  # 러셀 2 혜성 (주기: 약 7.6년)
-    "Hartley 2": "103P",  # 하틀리 2 혜성 (주기: 약 6.5년)
+    "Hartley-2": "103P",  # 하틀리 2 혜성 (주기: 약 6.5년)
     "Swift-Tuttle": "109P"  # 스위프트-터틀 혜성 (주기: 약 133년, 페르세우스 유성우의 원인)
     # "IRAS": "126P",  # IRAS 혜성 (주기: 약 13.6년)
     # "Machholz 2": "141P",  # 마흐홀츠 2 혜성 (주기: 약 5.2년)
@@ -176,6 +176,7 @@ def get_comet_approach_events(comet_name, date, range_days):
                     parts = entry.split()
                     if len(parts) >= 11:  # Ensure there are enough parts to parse correctly
                         parsed_dict.append({
+                            "comet_name": comet_name,
                             "time": f"{parts[0]} {parts[1]}",  # TIME
                             "ra": f"{parts[2]} {parts[3]} {parts[4]}",  # Right Ascension (RA)
                             "dec": f"{parts[5]} {parts[6]} {parts[7]}",  # Declination (DEC)
