@@ -187,9 +187,9 @@ def get_comet_approach_events(comet_name, date, range_days):
                     else:
                         print(f"Skipping line due to unexpected format: {entry}")
 
-                print("Parsed Data:")
-                for item in parsed_dict:
-                    print(item)
+                # print("Parsed Data:")
+                # for item in parsed_dict:
+                #      print(item)
 
                 return {"data": parsed_dict}
             else:

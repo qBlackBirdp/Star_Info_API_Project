@@ -186,6 +186,10 @@ def get_comet_approach():
         start_date_str = request.args.get('start_date')
         range_days = request.args.get('range_days', type=int, default=30)
 
+        # 추가: 위치 정보 받기
+        latitude = request.args.get('latitude', type=float)
+        longitude = request.args.get('longitude', type=float)
+
         # 필수 매개변수 검증
         if not comet_name or not start_date_str:
             return jsonify({"error": "Missing required parameters: 'comet' and 'start_date' are required."}), 400
@@ -197,9 +201,9 @@ def get_comet_approach():
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
         # 혜성 접근 이벤트 데이터 가져오기
-        result = get_comet_approach_data(comet_name, start_date.strftime('%Y-%m-%d'), range_days)
+        result = get_comet_approach_data(comet_name, start_date.strftime('%Y-%m-%d'), range_days, latitude, longitude)
 
         return jsonify(result)
-
     except Exception as e:
-        return jsonify({"error": f"Failed to get comet approach data: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to get comet approach: {str(e)}"}), 500
+
