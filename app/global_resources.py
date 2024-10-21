@@ -10,7 +10,7 @@ planets = load('/de440.bsp')
 
 # 지구 객체 생성 (전역 로드)
 earth = planets['earth']
-
+sun = planets['sun']
 # 별자리 데이터 로드 (전역 로드)
 constellation_map = load_constellation_map()
 

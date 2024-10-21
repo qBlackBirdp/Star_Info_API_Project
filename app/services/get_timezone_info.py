@@ -18,9 +18,9 @@ def get_timezone_info(lat, lon, timestamp):
         raise ValueError("Google Time Zone API key is not set in environment variables.")
 
     # 캐싱된 값이 있는지 확인
-    cache_key = (lat, lon, timestamp)
+    cache_key = (lat, lon)  # 캐시 키에서 timestamp 제거
     if cache_key in cached_timezone_info:
-        logger.info(f"Using cached timezone info for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
+        logger.info(f"Using cached timezone info for lat: {lat}, lon: {lon}")
         return cached_timezone_info[cache_key]
 
     base_url = "https://maps.googleapis.com/maps/api/timezone/json"
