@@ -7,38 +7,7 @@ from app.global_resources import ts, planets  # 전역 리소스 임포트
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range  # 일출 및 일몰 계산 함수 import
 from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
 from global_db_connection import get_db_connection
-
-
-# Skyfield에서 사용하는 행성 이름과 코드 간의 매핑
-def get_skyfield_planet_code(planet_name):
-    planet_name_map = {
-        "Mercury": "Mercury",
-        "Venus": "Venus",
-        "Earth": "Earth",
-        "Mars": "Mars barycenter",
-        "Jupiter": "Jupiter barycenter",
-        "Saturn": "Saturn barycenter",
-        "Uranus": "Uranus barycenter",
-        "Neptune": "Neptune barycenter",
-        "Pluto": "Pluto barycenter"
-    }
-    return planet_name_map.get(planet_name)
-
-
-# DB에 사용할 행성 코드와 이름 간의 매핑
-def get_db_planet_code(planet_name):
-    planet_name_map = {
-        "Mercury": 199,
-        "Venus": 299,
-        "Earth": 399,
-        "Mars": 499,
-        "Jupiter": 599,
-        "Saturn": 699,
-        "Uranus": 799,
-        "Neptune": 899,
-        "Pluto": 999
-    }
-    return planet_name_map.get(planet_name)
+from app.data.data import get_skyfield_planet_code, get_db_planet_code
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, timezone_info=None):

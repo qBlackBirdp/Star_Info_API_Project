@@ -1,11 +1,13 @@
 # services/comet_approach_service.py
+
 import traceback
 from datetime import datetime
 from app.services.horizons_service import get_comet_approach_events
 from app.services.coordinate_converter import calculate_altitude
+from app.services.meteor_shower_info import get_meteor_shower_info
 
 
-def get_comet_approach_data(comet_name, start_date, range_days=10, latitude=None, longitude=None):
+def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=None, longitude=None):
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         raw_data = get_comet_approach_events(comet_name, start_date_obj, range_days)
@@ -23,33 +25,47 @@ def get_comet_approach_data(comet_name, start_date, range_days=10, latitude=None
         if latitude is not None and longitude is not None:
             for approach_event in analyzed_data['sorted_data']:
                 visibility_data = evaluate_comet_visibility(approach_event, latitude, longitude)
-                # 가시성 있는 이벤트 및 가시성 이유를 함께 추가
+
+                # 유성우 정보 추가
+                meteor_shower_info = get_meteor_shower_info(comet_name, approach_event['time'])
+
                 visibility_results.append({
                     "event_data": approach_event,
                     "visible_times": visibility_data.get("visible_times", []),
                     "reasons_for_no_visibility": visibility_data.get("reasons_for_no_visibility", []),
-                    "message": visibility_data.get("message", "Visibility evaluation completed.")
+                    "message": visibility_data.get("message", "Visibility evaluation completed."),
+                    "meteor_shower": meteor_shower_info
                 })
 
         # 가시성 있는 이벤트와 없는 이벤트를 나눔
         visible_events = [event for event in visibility_results if event['visible_times']]
         non_visible_events = [event for event in visibility_results if not event['visible_times']]
 
-        # 가시성 있는 이벤트를 시간 순서대로 정렬
-        sorted_visible_events = sorted(visible_events,
-                                       key=lambda x: x['visible_times'][0]['local_time']) if visible_events else []
+        # 가시성 있는 이벤트 중 가장 가까운 시점 찾기
+        closest_visible_event = min(visible_events,
+                                    key=lambda x: x['visible_times'][0]['local_time']) if visible_events else None
 
-        # 가시성 있는 이벤트는 위에, 없는 이벤트는 아래에 배치
-        sorted_visibility_results = sorted_visible_events + non_visible_events
-
-        return {
-            "closest_approach": {
-                "data": analyzed_data['closest_approach'],
-                "latitude": latitude,
-                "longitude": longitude
-            },
-            "visibility_results": sorted_visibility_results
-        }
+        if closest_visible_event:
+            return {
+                "closest_approach": {
+                    "data": analyzed_data['closest_approach'],
+                    "latitude": latitude,
+                    "longitude": longitude
+                },
+                "closest_visible_event": closest_visible_event,
+                "message": "Closest visible event found."
+            }
+        else:
+            return {
+                "closest_approach": {
+                    "data": analyzed_data['closest_approach'],
+                    "latitude": latitude,
+                    "longitude": longitude
+                },
+                "message": "No visible event found.",
+                "reasons_for_no_visibility": non_visible_events[0][
+                    'reasons_for_no_visibility'] if non_visible_events else []
+            }
     except Exception as e:
         return {"error": f"Failed to get comet approach data: {str(e)}"}
 
@@ -119,7 +135,8 @@ def evaluate_comet_visibility(closest_approach_data, latitude, longitude):
         if alt <= 15.0:
             reasons_for_no_visibility.append(f"Altitude is too low ({alt}°). Must be greater than 15°.")
         if elongation <= 30.0:
-            reasons_for_no_visibility.append(f"Solar elongation is too small ({elongation}°). Must be greater than 30°.")
+            reasons_for_no_visibility.append(
+                f"Solar elongation is too small ({elongation}°). Must be greater than 30°.")
 
         # 가시성 조건을 모두 만족하지 않을 경우 메시지 추가
         if reasons_for_no_visibility:

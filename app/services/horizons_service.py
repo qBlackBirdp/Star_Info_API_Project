@@ -2,73 +2,7 @@
 
 import requests
 from datetime import datetime, timedelta
-
-PLANET_CODES = {
-    "Mercury": "199",
-    "Venus": "299",
-    "Earth": "399",
-    "Mars": "499",
-    "Jupiter": "599",
-    "Saturn": "699",
-    "Uranus": "799",
-    "Neptune": "899",
-    "Pluto": "999",
-    "Moon": "301",
-    "Phobos": "401",
-    "Deimos": "402",
-    "Io": "501",
-    "Europa": "502",
-    "Ganymede": "503",
-    "Callisto": "504",
-    "Mimas": "601",
-    "Enceladus": "602",
-    "Tethys": "603",
-    "Dione": "604",
-    "Rhea": "605",
-    "Titan": "606",
-    "Miranda": "701",
-    "Ariel": "702",
-    "Umbriel": "703",
-    "Titania": "704",
-    "Oberon": "705",
-    "Triton": "801",
-    "Nereid": "802",
-    "Ceres": "1;",
-    "Pallas": "2;",
-    "Vesta": "3;"
-}
-
-COMET_CODES = {
-    "Halley": "1P",  # 할리 혜성 (주기: 약 76년, 오리온자리 유성우의 원인)
-    "Encke": "2P",  # 엔케 혜성 (주기: 약 3.3년)
-    "Faye": "4P",  # 파예 혜성 (주기: 약 7.5년)
-    # "Brorsen": "5D",  # 브로르센 혜성 (소멸된 것으로 여겨짐)
-    # "d'Arrest": "6P",  # 다레스트 혜성 (주기: 약 6.6년)
-    # "Pons-Winnecke": "7P",  # 폰스-윈네케 혜성 (주기: 약 6.3년)
-    "Tuttle": "8P",  # 터틀 혜성 (주기: 약 13.5년)
-    # "Tempel 1": "9P",  # 템플 1 혜성 (주기: 약 5.5년)
-    # "Tempel-Swift-LINEAR": "11P",  # 템플-스위프트-LINEAR 혜성 (주기: 약 6.4년)
-    # "Olbers": "13P",  # 올버스 혜성 (주기: 약 69.5년)
-    # "Wolf": "14P",  # 울프 혜성 (주기: 약 8.8년)
-    # "Borrelly": "19P",  # 보렐리 혜성 (주기: 약 6.8년)
-    "Giacobini-Zinner": "21P",  # 자코비니-진너 혜성 (주기: 약 6.6년, 드라코니드 유성우의 원인)
-    # "Kopff": "22P",  # 콥프 혜성 (주기: 약 6.4년)
-    "Grigg-Skjellerup": "26P",  # 그리그-셰를럽 혜성 (주기: 약 5.1년)
-    # "Crommelin": "27P",  # 크롬멜린 혜성 (주기: 약 27.4년)
-    # "Neujmin 1": "28P",  # 누이민 1 혜성 (주기: 약 18.2년)
-    "Honda-Mrkos-Pajdusakova": "45P",  # 혼다-므르코스-파이두사코바 혜성 (주기: 약 5.3년)
-    "Tempel-Tuttle": "55P",  # 템플-터틀 혜성 (주기: 약 33.2년, 레오니드 유성우의 원인)
-    "Churyumov-Gerasimenko": "67P",  # 추류모프-게라시멘코 혜성 (주기: 약 6.5년, 로제타 탐사선으로 유명)
-    # "Schwassmann-Wachmann 3": "73P",  # 슈바스만-바흐만 3 혜성 (주기: 약 5.4년)
-    # "Kohoutek": "75P",  # 코후테크 혜성 (주기: 약 6.4년)
-    "Wild 2": "81P",  # 와일드 2 혜성 (주기: 약 6.4년)
-    # "Russell 2": "89P",  # 러셀 2 혜성 (주기: 약 7.6년)
-    "Hartley-2": "103P",  # 하틀리 2 혜성 (주기: 약 6.5년)
-    "Swift-Tuttle": "109P",  # 스위프트-터틀 혜성 (주기: 약 133년, 페르세우스 유성우의 원인)
-    # "IRAS": "126P",  # IRAS 혜성 (주기: 약 13.6년)
-    # "Machholz 2": "141P",  # 마흐홀츠 2 혜성 (주기: 약 5.2년)
-    # "Ikeya-Zhang": "153P"  # 이케야-장 혜성 (주기: 약 366.5년)
-}
+from app.data.data import PLANET_CODES, COMET_CODES
 
 
 def get_comet_record_number(comet_name):

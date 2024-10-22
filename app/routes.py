@@ -184,7 +184,7 @@ def get_comet_approach():
     try:
         comet_name = request.args.get('comet')
         start_date_str = request.args.get('start_date')
-        range_days = request.args.get('range_days', type=int, default=10)
+        range_days = request.args.get('range_days', type=int, default=365)
 
         # 추가: 위치 정보 받기
         latitude = request.args.get('latitude', type=float)

@@ -3,26 +3,11 @@
 from datetime import datetime
 from app.services.planet_visibility_service import get_db_planet_code
 import logging
-
+from app.data.data import get_opposition_au_threshold
 from global_db_connection import get_db_connection
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-# 행성별 대접근 기준 AU 값을 정의하는 매핑 함수
-def get_opposition_au_threshold(planet_name, strict=False):
-    opposition_au_thresholds = {
-        "Mercury": (0.56, 0.60),
-        "Venus": (0.30, 0.50),
-        "Mars": (0.643, 0.70),
-        "Jupiter": (4.1, 4.4),
-        "Saturn": (8.33, 8.66),
-        "Uranus": (18.40, 18.60),
-        "Neptune": (28.87, 28.90),
-        "Pluto": (34.1, 34.8)
-    }
-    return opposition_au_thresholds.get(planet_name, (None, None))[0 if strict else 1]
 
 
 def predict_opposition_events(planet_name, year, strict=False):
