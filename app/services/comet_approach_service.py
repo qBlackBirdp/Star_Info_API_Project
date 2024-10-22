@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime
 from app.services.horizons_service import get_comet_approach_events
 from app.services.coordinate_converter import calculate_altitude
-from app.services.meteor_shower_info import get_meteor_shower_info
+from app.services.meteor_shower_info import get_meteor_shower_info, get_general_meteor_shower_info
 
 
 def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=None, longitude=None):
@@ -26,15 +26,26 @@ def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=Non
             for approach_event in analyzed_data['sorted_data']:
                 visibility_data = evaluate_comet_visibility(approach_event, latitude, longitude)
 
-                # 유성우 정보 추가
+                # 접근 이벤트와 관계없이 유성우 정보 추가
                 meteor_shower_info = get_meteor_shower_info(comet_name, approach_event['time'])
+
+                # 유성우 정보가 있는 경우 관련성 판단 로직 추가
+                if meteor_shower_info and isinstance(meteor_shower_info, list):
+                    approach_date = datetime.strptime(approach_event['time'], '%Y-%b-%d %H:%M').date()
+                    for shower in meteor_shower_info:
+                        peak_start_date = datetime.strptime(f"{approach_date.year}-{shower['peak_period'][0]}", '%Y-%m-%d').date()
+                        peak_end_date = datetime.strptime(f"{approach_date.year}-{shower['peak_period'][1]}", '%Y-%m-%d').date()
+
+                        # 접근 날짜가 극대기와 일정 기간 내에 있는지 확인 (예: 10일 이내)
+                        if (peak_start_date - approach_date).days <= 10 or (approach_date - peak_end_date).days <= 10:
+                            shower['message'] = "혜성의 접근 시점이 유성우 극대기와 가까우므로 유성우 관측 가능성이 높습니다."
 
                 visibility_results.append({
                     "event_data": approach_event,
                     "visible_times": visibility_data.get("visible_times", []),
                     "reasons_for_no_visibility": visibility_data.get("reasons_for_no_visibility", []),
                     "message": visibility_data.get("message", "Visibility evaluation completed."),
-                    "meteor_shower": meteor_shower_info
+                    "meteor_shower": meteor_shower_info  # 리스트 형태 그대로 추가
                 })
 
         # 가시성 있는 이벤트와 없는 이벤트를 나눔
@@ -42,8 +53,9 @@ def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=Non
         non_visible_events = [event for event in visibility_results if not event['visible_times']]
 
         # 가시성 있는 이벤트 중 가장 가까운 시점 찾기
-        closest_visible_event = min(visible_events,
-                                    key=lambda x: x['visible_times'][0]['local_time']) if visible_events else None
+        closest_visible_event = min(visible_events, key=lambda x: x['visible_times'][0]['local_time']) if visible_events else None
+
+        meteor_shower_info_general = get_general_meteor_shower_info(comet_name)
 
         if closest_visible_event:
             return {
@@ -53,6 +65,7 @@ def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=Non
                     "longitude": longitude
                 },
                 "closest_visible_event": closest_visible_event,
+                "meteor_showers": meteor_shower_info_general,  # 유성우 극대기 정보 추가
                 "message": "Closest visible event found."
             }
         else:
@@ -62,9 +75,9 @@ def get_comet_approach_data(comet_name, start_date, range_days=365, latitude=Non
                     "latitude": latitude,
                     "longitude": longitude
                 },
+                "meteor_showers": meteor_shower_info_general,  # 유성우 극대기 정보 추가
                 "message": "No visible event found.",
-                "reasons_for_no_visibility": non_visible_events[0][
-                    'reasons_for_no_visibility'] if non_visible_events else []
+                "reasons_for_no_visibility": non_visible_events[0]['reasons_for_no_visibility'] if non_visible_events else []
             }
     except Exception as e:
         return {"error": f"Failed to get comet approach data: {str(e)}"}
