@@ -47,15 +47,31 @@ def get_halley_approach_data(start_date, range_days=365):
 
         if detection_result_first_half["status"] == "receding":
             # 멀어지고 있는 경우, 이후 다시 가까워지는 접근 이벤트가 있다면 그 데이터를 사용
-            closest_approach_first_half = detection_result_first_half.get("next_closest_approach",
-                                                                          closest_approach_first_half)
+            next_closest_approach = detection_result_first_half.get("next_closest_approach")
+            if next_closest_approach:
+                closest_approach_first_half = next_closest_approach
+            else:
+                # 멀어지는 경우, 다음 5월의 접근 데이터로 이동
+                next_may = datetime.strptime(closest_approach_first_half['time'], '%Y-%b-%d %H:%M').replace(month=5,
+                                                                                                            day=1)
+                first_half_data = get_comet_approach_events('Halley', next_may, 182)
+                if not first_half_data or "error" in first_half_data or not first_half_data.get('data'):
+                    return {"error": "No comet approach data available for the adjusted date."}
+                analyzed_data_first_half = analyze_comet_data(first_half_data['data'])
+                if "error" in analyzed_data_first_half:
+                    return analyzed_data_first_half
+                closest_approach_first_half = analyzed_data_first_half['closest_approach']
         elif detection_result_first_half["status"] == "closing":
             # 가까워지는 경우 극대기에 맞춰서 데이터를 조정
-            peak_period_start = datetime.strptime(closest_approach_first_half['time'], '%Y-%b-%d %H:%M').replace(month=5, day=1)
+            peak_period_start = datetime.strptime(closest_approach_first_half['time'], '%Y-%b-%d %H:%M').replace(
+                month=5, day=1)
             peak_period_end = peak_period_start + timedelta(days=14)
             closest_approach_time = datetime.strptime(closest_approach_first_half['time'], '%Y-%b-%d %H:%M')
             if not (peak_period_start <= closest_approach_time <= peak_period_end):
                 closest_approach_first_half['time'] = peak_period_start.strftime('%Y-%b-%d %H:%M')
+        else:
+            # 계속 멀어지는 경우
+            closest_approach_first_half['status'] = 'receding'
 
         # 두 번째 구간에서 혜성이 지구에서 멀어지고 있는지 판단
         detection_result_second_half = detect_closing_or_receding(sorted_data_second_half)
@@ -64,15 +80,31 @@ def get_halley_approach_data(start_date, range_days=365):
 
         if detection_result_second_half["status"] == "receding":
             # 멀어지고 있는 경우, 이후 다시 가까워지는 접근 이벤트가 있다면 그 데이터를 사용
-            closest_approach_second_half = detection_result_second_half.get("next_closest_approach",
-                                                                            closest_approach_second_half)
+            next_closest_approach = detection_result_second_half.get("next_closest_approach")
+            if next_closest_approach:
+                closest_approach_second_half = next_closest_approach
+            else:
+                # 멀어지는 경우, 다음 10월의 접근 데이터로 이동
+                next_october = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M').replace(
+                    month=10, day=1)
+                second_half_data = get_comet_approach_events('Halley', next_october, 182)
+                if not second_half_data or "error" in second_half_data or not second_half_data.get('data'):
+                    return {"error": "No comet approach data available for the adjusted date."}
+                analyzed_data_second_half = analyze_comet_data(second_half_data['data'])
+                if "error" in analyzed_data_second_half:
+                    return analyzed_data_second_half
+                closest_approach_second_half = analyzed_data_second_half['closest_approach']
         elif detection_result_second_half["status"] == "closing":
             # 가까워지는 경우 극대기에 맞춰서 데이터를 조정
-            peak_period_start = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M').replace(month=10, day=1)
+            peak_period_start = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M').replace(
+                month=10, day=1)
             peak_period_end = peak_period_start + timedelta(days=37)
             closest_approach_time = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M')
             if not (peak_period_start <= closest_approach_time <= peak_period_end):
                 closest_approach_second_half['time'] = peak_period_start.strftime('%Y-%b-%d %H:%M')
+        else:
+            # 계속 멀어지는 경우
+            closest_approach_second_half['status'] = 'receding'
 
         # 좌표 변환 처리 (첫 번째 구간)
         ra_str_first = closest_approach_first_half['ra']

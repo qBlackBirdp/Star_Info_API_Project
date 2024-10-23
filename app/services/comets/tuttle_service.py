@@ -1,5 +1,3 @@
-# services/comets/tuttle_service.py
-
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_comet_approach_events
 from app.services.comets import analyze_comet_data
@@ -52,6 +50,26 @@ def get_tuttle_approach_data(start_date, range_days=365):
 
                 if not raw_data or "error" in raw_data or not raw_data.get('data'):
                     return {"error": "No comet approach data available for the adjusted date."}
+
+                # 다시 접근 이벤트 데이터 분석
+                analyzed_data = analyze_comet_data(raw_data['data'])
+                if "error" in analyzed_data:
+                    return analyzed_data
+
+                closest_approach = analyzed_data['closest_approach']
+
+        elif detection_result["status"] == "closing":
+            # 가까워지고 있는 경우, 극대기 날짜로 이동하여 데이터 재요청
+            peak_period_start = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M').replace(month=12, day=1)
+            peak_period_end = peak_period_start + timedelta(days=14)
+            closest_approach_time = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M')
+
+            if not (peak_period_start <= closest_approach_time <= peak_period_end):
+                print(f"[DEBUG] Closest approach is not within peak period, adjusting date to peak period start: {peak_period_start}")
+                raw_data = get_comet_approach_events('Tuttle', peak_period_start, range_days)
+
+                if not raw_data or "error" in raw_data or not raw_data.get('data'):
+                    return {"error": "No comet approach data available for the peak period date."}
 
                 # 다시 접근 이벤트 데이터 분석
                 analyzed_data = analyze_comet_data(raw_data['data'])
