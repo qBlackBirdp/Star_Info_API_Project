@@ -1,7 +1,7 @@
 # services/planet_opposition_service.py
 
 from datetime import datetime
-from app.services.planet_visibility_service import get_db_planet_code
+from app.services.planets.planet_visibility_service import get_db_planet_code
 import logging
 from app.data.data import get_opposition_au_threshold
 from global_db_connection import get_db_connection

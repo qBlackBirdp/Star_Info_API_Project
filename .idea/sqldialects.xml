@@ -2,9 +2,9 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/DB.spl" dialect="MariaDB" />
-    <file url="file://$PROJECT_DIR$/app/services/planet_event_storage_service.py" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/app/services/planet_opposition_service.py" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/app/services/planet_visibility_service.py" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/app/services/planets/planet_event_storage_service.py" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/app/services/planets/planet_opposition_service.py" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/app/services/planets/planet_visibility_service.py" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/docker-entrypoint-initdb.d/init.sql" dialect="MySQL" />
   </component>
 </project>

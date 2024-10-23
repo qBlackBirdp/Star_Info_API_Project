@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_comet_approach_events
 from app.data.data import COMET_CONDITIONS
-from app.services.coordinate_converter import parse_ra_dec
+from app.services.comets.commet_utils import parse_ra_dec, analyze_comet_data
 from app.services.comets.halley_service import get_halley_approach_data
 
 
@@ -46,32 +46,3 @@ def get_comet_approach_data(comet_name, start_date, range_days=365):
 
     except Exception as e:
         return {"error": f"Failed to get comet approach data: {str(e)}"}
-
-
-def analyze_comet_data(data):
-    """
-    혜성 접근 이벤트 데이터를 정리하고 분석하는 함수.
-
-    Args:
-        data (list): 혜성 접근 이벤트 데이터 리스트.
-
-    Returns:
-        dict: 분석된 접근 이벤트 정보.
-    """
-    try:
-        if not data:
-            return {"error": "No data available for analysis."}
-
-        # 접근 이벤트를 시간 순으로 정렬
-        sorted_data = sorted(data, key=lambda x: datetime.strptime(x['time'], '%Y-%b-%d %H:%M'))
-
-        if not sorted_data:
-            return {"error": "Sorted data is empty."}
-
-        # 지구와 가장 가까운 접근 이벤트 찾기
-        closest_approach = min(sorted_data, key=lambda x: float(x['delta']))
-
-        # 가장 가까운 접근 이벤트 반환
-        return {"closest_approach": closest_approach}
-    except Exception as e:
-        return {"error": f"Failed to analyze comet data: {str(e)}"}

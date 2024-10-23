@@ -4,15 +4,15 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 
-from .services.meteor_shower_info import get_meteor_shower_info
-from .services.comet_approach_service import get_comet_approach_data
+from .services.comets.meteor_shower_info import get_meteor_shower_info
+from .services.comets.comet_approach_service import get_comet_approach_data
 from .services.get_timezone_info import get_timezone_info
-from .services.constellation_service import get_constellations_for_date_range
-from .services.planet_visibility_service import calculate_planet_info
+from .services.constellation.constellation_service import get_constellations_for_date_range
+from .services.planets.planet_visibility_service import calculate_planet_info
 from .services.sunrise_sunset_service import calculate_sunrise_sunset_for_range
-from .services.planet_event_storage_service import update_raw_data
-from .services.constellation_visibility_service import calculate_visibility_for_constellations_parallel
-from .services.planet_opposition_service import predict_opposition_events
+from .services.planets.planet_event_storage_service import update_raw_data
+from .services.constellation.constellation_visibility_service import calculate_visibility_for_constellations_parallel
+from .services.planets.planet_opposition_service import predict_opposition_events
 
 # Blueprint 객체 생성: 이 블루프린트를 사용해 라우트를 정의함
 main = Blueprint('main', __name__)

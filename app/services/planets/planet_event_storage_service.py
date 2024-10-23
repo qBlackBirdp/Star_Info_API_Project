@@ -4,7 +4,7 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 from global_db_connection import get_db_connection
-from app.services.planet_visibility_service import get_db_planet_code
+from app.services.planets.planet_visibility_service import get_db_planet_code
 from app.services.horizons_service import get_planet_position_from_horizons
 
 # 로깅 설정

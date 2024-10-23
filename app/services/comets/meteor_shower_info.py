@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from app.data.data import METEOR_SHOWERS, LENIENT_CONDITIONS, COMET_PERIHELION_PEAK_OFFSET
-from app.services.comet_approach_service import get_comet_approach_data
+from app.services.comets.comet_approach_service import get_comet_approach_data
 
 ERROR_MARGIN_DAYS = 31  # 극대기의 추정 오차 범위 (±5일)
 

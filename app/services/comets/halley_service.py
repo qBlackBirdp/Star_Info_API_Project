@@ -2,8 +2,8 @@
 
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_comet_approach_events
-from app.services.coordinate_converter import parse_ra_dec
-from app.services.comet_approach_service import analyze_comet_data
+from app.services.comets.commet_utils import parse_ra_dec
+from app.services.comets.comet_approach_service import analyze_comet_data
 
 
 def get_halley_approach_data(start_date, range_days=365):
