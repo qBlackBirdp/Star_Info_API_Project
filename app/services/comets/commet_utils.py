@@ -54,7 +54,7 @@ def analyze_comet_data(data):
         data (list): 혜성 접근 이벤트 데이터 리스트.
 
     Returns:
-        dict: 분석된 접근 이벤트 정보.
+        dict: 정렬된 접근 이벤트 리스트와 가장 가까운 접근 이벤트 정보.
     """
     try:
         if not data:
@@ -69,37 +69,60 @@ def analyze_comet_data(data):
         # 지구와 가장 가까운 접근 이벤트 찾기
         closest_approach = min(sorted_data, key=lambda x: float(x['delta']))
 
-        # 가장 가까운 접근 이벤트 반환
-        return {"closest_approach": closest_approach}
+        # 정렬된 접근 이벤트 리스트와 가장 가까운 접근 이벤트 반환
+        return {
+            "sorted_data": sorted_data,
+            "closest_approach": closest_approach
+        }
     except Exception as e:
         return {"error": f"Failed to analyze comet data: {str(e)}"}
 
 
-def analyze_comet_data_for_approach(data):
+def detect_closing_or_receding(sorted_data):
     """
-    혜성 접근 데이터를 분석하여 접근 및 멀어짐의 변화를 감지하는 함수.
-    여러 접근 이벤트를 분석하여 혜성이 다시 가까워지는 시점을 찾는다.
+    정렬된 혜성 접근 데이터를 분석하여 멀어짐의 변화를 감지하고, 가까워지는 시점을 찾는 함수.
+    접근 이벤트를 분석하여 혜성이 멀어지는지, 아니면 가까워지는지 판단한다.
+
+    Args:
+        sorted_data (list): 정렬된 혜성 접근 이벤트 데이터 리스트.
+
+    Returns:
+        dict: 혜성이 가까워지는지 멀어지는지에 대한 정보.
     """
     try:
-        if not data:
-            return {"error": "No data available for analysis."}
-
-        sorted_data = sorted(data, key=lambda x: datetime.strptime(x['time'], '%Y-%b-%d %H:%M'))
         if not sorted_data:
-            return {"error": "Sorted data is empty."}
+            return {"error": "No sorted data available for analysis."}
 
+        # 지구와 가장 가까운 접근 이벤트 찾기
         closest_approach = min(sorted_data, key=lambda x: float(x['delta']))
+        closest_index = sorted_data.index(closest_approach)
 
-        # 멀어지고 있다면 이후 다시 가까워지는 시점을 찾기
+        # 현재 접근 이벤트가 멀어지고 있는지 감지
         deldot = float(closest_approach['deldot'])
         if deldot > 0:  # 현재 멀어지고 있는 경우
-            for event in sorted_data:
-                if float(event['deldot']) < 0:  # 다시 가까워지는 시점
-                    return {"closest_approach": event, "message": "Comet is getting closer again."}
+            # 멀어지고 있다면 이후 다시 가까워지는 시점을 찾는다.
+            for event in sorted_data[closest_index + 1:]:
+                if float(event['deldot']) < 0:  # 다시 가까워지는 시점 발견
+                    return {
+                        "status": "receding",
+                        "next_closest_approach": event,
+                        "message": "Comet is getting closer again."
+                    }
 
-        return {"closest_approach": closest_approach}
+            # 계속 멀어지고 있는 경우
+            return {
+                "status": "receding",
+                "message": "Comet continues to recede."
+            }
+
+        # 멀어지지 않고 계속 가까워지는 경우
+        return {
+            "status": "closing",
+            "message": "Comet is continuously approaching."
+        }
+
     except Exception as e:
-        return {"error": f"Failed to analyze comet data: {str(e)}"}
+        return {"error": f"Failed to detect closing or receding status: {str(e)}"}
 
 
-__all__ = ['analyze_comet_data', 'parse_ra_dec']
+__all__ = ['analyze_comet_data', 'detect_closing_or_receding', 'parse_ra_dec']

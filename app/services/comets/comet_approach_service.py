@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_comet_approach_events
 from app.data.data import COMET_CONDITIONS
-from app.services.comets.commet_utils import parse_ra_dec, analyze_comet_data
+from app.services.comets.commet_utils import parse_ra_dec, analyze_comet_data, detect_closing_or_receding
 from app.services.comets.halley_service import get_halley_approach_data
 from app.services.comets.tuttle_service import get_tuttle_approach_data
 
@@ -31,25 +31,34 @@ def get_comet_approach_data(comet_name, start_date, range_days=365):
                 return {"error": "No comet approach data available."}
 
             # 접근 이벤트 데이터 분석
-            analyzed_data = analyze_comet_data(raw_data['data'])
+            sorted_data = sorted(raw_data['data'], key=lambda x: datetime.strptime(x['time'], '%Y-%b-%d %H:%M'))
+            analyzed_data = analyze_comet_data(sorted_data)
             print(f"Analyzed data: {analyzed_data}")
             if "error" in analyzed_data:
                 return analyzed_data
 
-            # 접근 이벤트 데이터를 변환된 형태로 업데이트
-            closest_approach = analyzed_data['closest_approach']
-            ra_str = closest_approach['ra']
-            dec_str = closest_approach['dec']
-            converted_ra, converted_dec = parse_ra_dec(ra_str, dec_str)
+            # 혜성의 접근 상태를 감지
+            status_data = detect_closing_or_receding(sorted_data)
+            if "error" in status_data:
+                return status_data
 
-            closest_approach['converted_ra'] = converted_ra
-            closest_approach['converted_dec'] = converted_dec
+            # 접근 이벤트 데이터를 변환된 형태로 업데이트
+            closest_approach = status_data.get('closest_approach') or status_data.get('next_closest_approach')
+            if closest_approach:
+                ra_str = closest_approach['ra']
+                dec_str = closest_approach['dec']
+                converted_ra, converted_dec = parse_ra_dec(ra_str, dec_str)
+
+                closest_approach['converted_ra'] = converted_ra
+                closest_approach['converted_dec'] = converted_dec
 
             return {
+                "status": status_data.get('status', 'unknown'),
                 "closest_approach": closest_approach,
-                "message": "Comet approach data retrieved successfully."
+                "message": status_data.get('message', 'Comet approach data retrieved successfully.')
             }
 
     except Exception as e:
         print(f"Error in get_comet_approach_data: {str(e)}")
         return {"error": f"Failed to get comet approach data: {str(e)}"}
+
