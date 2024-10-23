@@ -1,3 +1,5 @@
+# services/comets/tuttle_service.py
+
 from datetime import datetime, timedelta
 from app.services.horizons_service import get_comet_approach_events
 from app.services.comets import analyze_comet_data
@@ -40,10 +42,11 @@ def get_tuttle_approach_data(start_date, range_days=365):
                 # closest_approach['time']을 datetime 객체로 변환
                 approach_time = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M')
                 # 멀어지고 있는 경우 다음 12월의 접근 데이터로 이동
-                next_december = datetime(approach_time.year, 12, 1)
+                next_december = datetime(approach_time.year, 12, 15)
                 if approach_time.month >= 12:
-                    next_december = datetime(approach_time.year + 1, 12, 1)
-                print(f"[DEBUG] Next December date set to (after adjustment if needed): {next_december} (Type: {type(next_december)})")
+                    next_december = datetime(approach_time.year + 1, 12, 15)
+                print(
+                    f"[DEBUG] Next December date set to (after adjustment if needed): {next_december} (Type: {type(next_december)})")
 
                 # 다음 12월로 접근 데이터를 가져오기
                 raw_data = get_comet_approach_events('Tuttle', next_december, range_days)
@@ -60,12 +63,13 @@ def get_tuttle_approach_data(start_date, range_days=365):
 
         elif detection_result["status"] == "closing":
             # 가까워지고 있는 경우, 극대기 날짜로 이동하여 데이터 재요청
-            peak_period_start = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M').replace(month=12, day=1)
+            peak_period_start = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M').replace(month=12, day=15)
             peak_period_end = peak_period_start + timedelta(days=14)
             closest_approach_time = datetime.strptime(closest_approach['time'], '%Y-%b-%d %H:%M')
 
             if not (peak_period_start <= closest_approach_time <= peak_period_end):
-                print(f"[DEBUG] Closest approach is not within peak period, adjusting date to peak period start: {peak_period_start}")
+                print(
+                    f"[DEBUG] Closest approach is not within peak period, adjusting date to peak period start: {peak_period_start}")
                 raw_data = get_comet_approach_events('Tuttle', peak_period_start, range_days)
 
                 if not raw_data or "error" in raw_data or not raw_data.get('data'):

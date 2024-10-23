@@ -86,7 +86,7 @@ def get_halley_approach_data(start_date, range_days=365):
             else:
                 # 멀어지는 경우, 다음 10월의 접근 데이터로 이동
                 next_october = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M').replace(
-                    month=10, day=1)
+                    month=10, day=8)
                 second_half_data = get_comet_approach_events('Halley', next_october, 182)
                 if not second_half_data or "error" in second_half_data or not second_half_data.get('data'):
                     return {"error": "No comet approach data available for the adjusted date."}
@@ -97,7 +97,7 @@ def get_halley_approach_data(start_date, range_days=365):
         elif detection_result_second_half["status"] == "closing":
             # 가까워지는 경우 극대기에 맞춰서 데이터를 조정
             peak_period_start = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M').replace(
-                month=10, day=1)
+                month=10, day=8)
             peak_period_end = peak_period_start + timedelta(days=37)
             closest_approach_time = datetime.strptime(closest_approach_second_half['time'], '%Y-%b-%d %H:%M')
             if not (peak_period_start <= closest_approach_time <= peak_period_end):
