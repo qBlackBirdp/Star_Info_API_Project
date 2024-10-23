@@ -4,6 +4,7 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 
+from .services.meteor_shower_info import get_meteor_shower_info
 from .services.comet_approach_service import get_comet_approach_data
 from .services.get_timezone_info import get_timezone_info
 from .services.constellation_service import get_constellations_for_date_range
@@ -201,9 +202,37 @@ def get_comet_approach():
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
         # 혜성 접근 이벤트 데이터 가져오기
-        result = get_comet_approach_data(comet_name, start_date.strftime('%Y-%m-%d'), range_days, latitude, longitude)
+        result = get_comet_approach_data(comet_name, start_date.strftime('%Y-%m-%d'), range_days)
 
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": f"Failed to get comet approach: {str(e)}"}), 500
 
+
+@main.route('/api/meteor_shower', methods=['GET'])
+def get_meteor_shower():
+    """
+    사용자가 요청한 혜성 이름과 접근 이벤트 정보를 바탕으로 유성우 정보를 반환하는 API 엔드포인트
+    """
+    try:
+        comet_name = request.args.get('comet')
+        start_date_str = request.args.get('start_date')
+        range_days = request.args.get('range_days', type=int, default=365)
+
+        # 필수 매개변수 검증
+        if not comet_name or not start_date_str:
+            return jsonify({"error": "Missing required parameters: 'comet' and 'start_date' are required."}), 400
+
+        # 날짜 문자열을 datetime 객체로 변환
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # 유성우 정보 가져오기
+        meteor_shower_info = get_meteor_shower_info(comet_name, start_date.strftime('%Y-%m-%d'), range_days)
+
+        return jsonify(meteor_shower_info)
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to get meteor shower information: {str(e)}"}), 500

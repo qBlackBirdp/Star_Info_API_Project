@@ -1,17 +1,115 @@
 # data.py
 
+# 과거 관측 데이터를 기반으로 한 혜성별 유성우 극대기까지의 평균 일 수
+COMET_PERIHELION_PEAK_OFFSET = {
+    "Halley": 75,  # 에타 아쿠아리드 유성우는 근일점 통과 후 약 75일 뒤 극대기 발생
+    "Encke": 50,  # 타우리드 유성우는 근일점 통과 후 약 50일 뒤 극대기 발생
+    "Tuttle": 80,  # 우르시드 유성우는 근일점 통과 후 약 80일 뒤 극대기 발생
+    "Giacobini-Zinner": 40,  # 드라코니드 유성우는 근일점 통과 후 약 40일 뒤 극대기 발생
+    "Tempel-Tuttle": 100,  # 레오니드 유성우는 근일점 통과 후 약 100일 뒤 극대기 발생
+    "Schwassmann-Wachmann": 60,  # 타우 헤르쿨리드 유성우는 근일점 통과 후 약 60일 뒤 극대기 발생
+    "Swift-Tuttle": 70  # 페르세이드 유성우는 근일점 통과 후 약 70일 뒤 극대기 발생
+}
+
+COMET_CONDITIONS = {
+    "Giacobini-Zinner": {
+        "min_altitude": 10.0,  # 최소 고도 (10도)
+        "min_elongation": 20.0  # 최소 신축각 (20도)
+    },
+    "Halley": {
+        "min_altitude": 15.0,  # 최소 고도 (15도)
+        "min_elongation": 30.0  # 최소 신축각 (30도)
+    },
+    "Tempel-Tuttle": {
+        "min_altitude": 12.0,  # 최소 고도 (12도)
+        "min_elongation": 25.0  # 최소 신축각 (25도)
+    },
+    "Encke": {
+        "min_altitude": 8.0,  # 최소 고도 (8도)
+        "min_elongation": 15.0  # 최소 신축각 (15도)
+    },
+    "Swift-Tuttle": {
+        "min_altitude": 18.0,  # 최소 고도 (18도)
+        "min_elongation": 35.0  # 최소 신축각 (35도)
+    },
+    "Schwassmann-Wachmann": {
+        "min_altitude": 10.0,  # 최소 고도 (10도)
+        "min_elongation": 20.0  # 최소 신축각 (20도)
+    },
+    "Tuttle": {
+        "min_altitude": 14.0,  # 최소 고도 (14도)
+        "min_elongation": 25.0  # 최소 신축각 (25도)
+    },
+    # 필요에 따라 추가적인 혜성 조건들을 계속 추가 가능
+}
+
+LENIENT_CONDITIONS = {
+    "min_altitude": 5.0,  # 최소 고도 (5도)
+    "min_elongation": 10.0  # 최소 신축각 (10도)
+}
+
 METEOR_SHOWERS = {
     "Halley": [
-        {"name": "Eta Aquariid", "peak_period": ("04-20", "05-10")},
-        {"name": "Orionid", "peak_period": ("10-02", "11-07")}
+        {
+            "name": "Eta Aquariid",
+            "peak_period": ["04-20", "05-10"],  # 매년 4월 20일부터 5월 10일까지 극대기
+            "annual": True  # 매년 규칙적으로 발생
+        },
+        {
+            "name": "Orionid",
+            "peak_period": ["10-02", "11-07"],  # 매년 10월 2일부터 11월 7일까지 극대기
+            "annual": True  # 매년 규칙적으로 발생
+        }
     ],
-    "Encke": [{"name": "Taurid", "peak_period": ("10-20", "11-30")}],
-    "Tuttle": [{"name": "Ursid", "peak_period": ("12-17", "12-26")}],
-    "Giacobini-Zinner": [{"name": "Draconid", "peak_period": ("10-06", "10-10")}],
-    "Tempel-Tuttle": [{"name": "Leonid", "peak_period": ("11-15", "11-20")}],
-    "Schwassmann-Wachmann": [{"name": "Tau Herculid", "peak_period": ("05-25", "06-10")}],
-    "Swift-Tuttle": [{"name": "Perseid", "peak_period": ("08-10", "08-15")}]
+    "Tuttle": [
+        {
+            "name": "Ursid",
+            "peak_period": ["12-17", "12-26"],  # 매년 12월 17일부터 12월 26일까지 극대기
+            "annual": True
+        }
+    ],
+    "Swift-Tuttle": [
+        {
+            "name": "Perseid",
+            "peak_period": ["08-10", "08-15"],  # 매년 8월 10일부터 8월 15일까지 극대기
+            "annual": True
+        }
+    ]
 }
+
+# 비주기 메테오
+NON_ANNUAL_METEOR_SHOWERS = {
+    "Encke": [
+        {
+            "name": "Taurid",
+            "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
+            "annual": False
+        }
+    ],
+    "Giacobini-Zinner": [
+        {
+            "name": "Draconid",
+            "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
+            "annual": False
+        }
+    ],
+    "Tempel-Tuttle": [
+        {
+            "name": "Leonid",
+            "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
+            "annual": False
+        }
+    ],
+    "Schwassmann-Wachmann": [
+        {
+            "name": "Tau Herculid",
+            "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
+            "annual": False
+        }
+    ]
+}
+
+
 
 PLANET_CODES = {
     "Mercury": "199",
