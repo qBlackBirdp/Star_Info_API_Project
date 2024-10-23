@@ -7,6 +7,7 @@ from app.data.data import COMET_CONDITIONS
 from app.services.comets.commet_utils import parse_ra_dec, analyze_comet_data, detect_closing_or_receding
 from app.services.comets.halley_service import get_halley_approach_data
 from app.services.comets.tuttle_service import get_tuttle_approach_data
+from app.services.comets.swift_tuttle_service import get_swift_tuttle_approach_data
 
 
 def get_comet_approach_data(comet_name, start_date, range_days=365):
@@ -15,6 +16,8 @@ def get_comet_approach_data(comet_name, start_date, range_days=365):
         comet_name_lower = comet_name.lower()
         if comet_name_lower == 'halley':
             return get_halley_approach_data(start_date, range_days)
+        if comet_name_lower == 'swift-tuttle':
+            return get_swift_tuttle_approach_data(start_date, range_days)
         elif comet_name_lower == 'tuttle':
             return get_tuttle_approach_data(start_date, range_days)
 
