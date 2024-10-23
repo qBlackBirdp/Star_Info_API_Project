@@ -16,7 +16,6 @@ def get_comet_approach_data(comet_name, start_date, range_days=365):
         if comet_name_lower == 'halley':
             return get_halley_approach_data(start_date, range_days)
         elif comet_name_lower == 'tuttle':
-            print(f"Calling get_tuttle_approach_data with start_date: {start_date}, range_days: {range_days}")
             return get_tuttle_approach_data(start_date, range_days)
 
         # 일반적인 혜성 접근 이벤트 요청 처리
