@@ -75,4 +75,31 @@ def analyze_comet_data(data):
         return {"error": f"Failed to analyze comet data: {str(e)}"}
 
 
+def analyze_comet_data_for_approach(data):
+    """
+    혜성 접근 데이터를 분석하여 접근 및 멀어짐의 변화를 감지하는 함수.
+    여러 접근 이벤트를 분석하여 혜성이 다시 가까워지는 시점을 찾는다.
+    """
+    try:
+        if not data:
+            return {"error": "No data available for analysis."}
+
+        sorted_data = sorted(data, key=lambda x: datetime.strptime(x['time'], '%Y-%b-%d %H:%M'))
+        if not sorted_data:
+            return {"error": "Sorted data is empty."}
+
+        closest_approach = min(sorted_data, key=lambda x: float(x['delta']))
+
+        # 멀어지고 있다면 이후 다시 가까워지는 시점을 찾기
+        deldot = float(closest_approach['deldot'])
+        if deldot > 0:  # 현재 멀어지고 있는 경우
+            for event in sorted_data:
+                if float(event['deldot']) < 0:  # 다시 가까워지는 시점
+                    return {"closest_approach": event, "message": "Comet is getting closer again."}
+
+        return {"closest_approach": closest_approach}
+    except Exception as e:
+        return {"error": f"Failed to analyze comet data: {str(e)}"}
+
+
 __all__ = ['analyze_comet_data', 'parse_ra_dec']
