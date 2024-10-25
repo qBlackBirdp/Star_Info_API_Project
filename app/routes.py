@@ -5,6 +5,7 @@ import logging
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 
+from .services.comets.meteor_shower_info_storage_service import update_meteor_shower_data
 from .services.comets.meteor_shower_info import get_meteor_shower_info
 from .services.comets.comet_approach_service import get_comet_approach_data
 from .services.get_timezone_info import get_timezone_info
@@ -238,3 +239,16 @@ def get_meteor_shower():
 
     except Exception as e:
         return jsonify({"error": f"Failed to get meteor shower information: {str(e)}"}), 500
+
+
+@main.route('/api/update_meteor/raw_data', methods=['POST'])
+def update_meteor_raw_data():
+    """
+    유성우 데이터를 업데이트하는 엔드포인트.
+    """
+    try:
+        # 서비스 레이어 함수 호출
+        update_meteor_shower_data()
+        return jsonify({"message": "Meteor shower data updated successfully."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

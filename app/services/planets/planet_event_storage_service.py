@@ -35,7 +35,7 @@ def update_raw_data():
     모든 행성에 대해 현재 연도와 다음 연도의 대접근 이벤트 데이터를 업데이트하는 함수
     """
     planets = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
-    current_year = datetime.now().year
+    current_year = datetime.now().year + 2
 
     try:
         for planet in planets:

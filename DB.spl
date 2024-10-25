@@ -45,5 +45,27 @@ SELECT * FROM planet_raw_data_2024;
 -- 행성 이름 조회
 SELECT * FROM planet_info;
 
+
+-- 테스트중.
+SELECT * FROM meteor_shower_info;
+
+DROP TABLE IF EXISTS meteor_shower_info;
+
+CREATE TABLE meteor_shower_info (
+id INT AUTO_INCREMENT PRIMARY KEY,
+comet_name VARCHAR(100) NOT NULL,
+name VARCHAR(100) NOT NULL,
+peak_period VARCHAR(50) NOT NULL,
+peak_start_date DATE NOT NULL,
+peak_end_date DATE NOT NULL,
+message VARCHAR(255) NOT NULL,
+conditions_used VARCHAR(100) NOT NULL,
+status VARCHAR(50) NOT NULL,
+distance VARCHAR(50),
+ra VARCHAR(50),
+declination VARCHAR(50)
+);
+
+
 -- 테이블 생성 확인
 SHOW TABLES;

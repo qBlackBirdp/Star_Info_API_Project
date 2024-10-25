@@ -1,10 +1,8 @@
-# meteor_shower_info.py
+# services/comets/meteor_shower_info.py
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from app.data.data import METEOR_SHOWERS, LENIENT_CONDITIONS, COMET_PERIHELION_PEAK_OFFSET
 from app.services.comets.comet_approach_service import get_comet_approach_data
-from app.models.meteor_shower_raw_data import MeteorShowerInfo  # SQLAlchemy 모델
-from app import db  # SQLAlchemy 데이터베이스 객체
 
 ERROR_MARGIN_DAYS = 31  # 극대기의 추정 오차 범위 (±5일)
 
@@ -86,26 +84,7 @@ def get_meteor_shower_info(comet_name, start_date, range_days=365):
             "declination": closest_approach.get("dec", "unknown"),
         }
 
-        # DB에 유성우 정보 저장
-        meteor_shower_record = MeteorShowerInfo(
-            comet_name=shower_info["comet_name"],
-            name=shower_info["name"],
-            peak_period=shower_info["peak_period"],
-            peak_start_date=shower_info["peak_start_date"],
-            peak_end_date=shower_info["peak_end_date"],
-            message=shower_info["message"],
-            conditions_used=shower_info["conditions_used"],
-            status=shower_info["status"],
-            distance=shower_info["distance"],
-            ra=shower_info["ra"],
-            declination=shower_info["dec"]
-        )
-        db.session.add(meteor_shower_record)
-
         shower_info_list.append(shower_info)
-
-    # 변경사항 커밋
-    db.session.commit()
 
     return shower_info_list if shower_info_list else None
 
@@ -174,25 +153,6 @@ def get_meteor_shower_info_halley(comet_name, start_date, range_days=365):
                 "declination": first_approach.get("dec", "unknown"),
             }
 
-            # DB에 유성우 정보 저장
-            meteor_shower_record = MeteorShowerInfo(
-                comet_name=shower_info["comet_name"],
-                name=shower_info["name"],
-                peak_period=shower_info["peak_period"],
-                peak_start_date=shower_info["peak_start_date"],
-                peak_end_date=shower_info["peak_end_date"],
-                message=shower_info["message"],
-                conditions_used=shower_info["conditions_used"],
-                status=shower_info["status"],
-                distance=shower_info["distance"],
-                ra=shower_info["ra"],
-                declination=shower_info["dec"]
-            )
-            db.session.add(meteor_shower_record)
-
             shower_info_list.append(shower_info)
-
-    # 변경사항 커밋
-    db.session.commit()
 
     return shower_info_list if shower_info_list else None
