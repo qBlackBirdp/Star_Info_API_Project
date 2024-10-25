@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from skyfield.api import Topos, N, E
 from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
-from .timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import 상대경로 유지.
+from .timezone_conversion_service import convert_utc_to_local_time, get_cached_utc_offset  # 시간 변환 함수 import 상대경로 유지.
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지.
 
 
@@ -26,15 +26,11 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
     location = Topos(latitude * N, longitude * E)
     result_list = []
 
-    # 첫 번째 날짜에 대해 타임존 오프셋을 계산하여 재사용 (만약 제공되지 않은 경우)
+    # 첫 번째 날짜에 대해 타임존 오프셋을 캐싱하여 재사용 (만약 제공되지 않은 경우)
     if offset_sec is None or timezone_id is None:
         try:
             timezone_timestamp = int(start_date.timestamp())
-            timezone_info = get_timezone_info(latitude, longitude, timezone_timestamp)
-            if 'rawOffset' not in timezone_info:
-                raise ValueError("타임존 정보에 'rawOffset'이 없습니다.")
-            offset_sec = timezone_info['rawOffset'] + timezone_info.get('dstOffset', 0)
-            timezone_id = timezone_info['timeZoneId']
+            offset_sec, timezone_id = get_cached_utc_offset(latitude, longitude, timezone_timestamp)
         except Exception as e:
             return {"error": f"타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
 
