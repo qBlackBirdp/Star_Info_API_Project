@@ -5,6 +5,7 @@ import logging
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 
+from .services.comets import meteor_shower_visibility_service
 from .services.comets.meteor_shower_info_storage_service import update_meteor_shower_data
 from .services.comets.meteor_shower_info import get_meteor_shower_info
 from .services.comets.comet_approach_service import get_comet_approach_data
@@ -252,3 +253,37 @@ def update_meteor_raw_data():
         return jsonify({"message": "Meteor shower data updated successfully."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@main.route('/api/meteor_shower_visibility', methods=['GET'])
+def fetch_meteor_shower_data():
+    """
+    유성우 이름과 연도를 기준으로 유성우 데이터를 조회하는 엔드포인트
+
+    Query Params:
+        name (str): 유성우의 이름 (필수).
+        year (int): 조회할 연도 (필수).
+
+    Returns:
+        JSON: 유성우 정보 리스트 또는 에러 메시지.
+    """
+    # 요청에서 쿼리 파라미터를 가져오기
+    name = request.args.get('name')
+    year = request.args.get('year')
+
+    # 필수 파라미터 체크
+    if not name or not year:
+        return jsonify({"error": "Missing required query parameters: name and year"}), 400
+
+    try:
+        # 연도 파라미터를 정수로 변환
+        year = int(year)
+    except ValueError:
+        return jsonify({"error": "Year must be an integer."}), 400
+
+    # 유성우 데이터 조회를 서비스 레이어에 위임
+    data = meteor_shower_visibility_service.get_meteor_shower_data(name, year)
+    if "error" in data:
+        return jsonify(data), 404
+
+    return jsonify(data), 200

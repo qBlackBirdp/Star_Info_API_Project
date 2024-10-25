@@ -86,7 +86,8 @@ def get_meteor_shower_info(comet_name, start_date, range_days=365):
 
         shower_info_list.append(shower_info)
 
-    return shower_info_list if shower_info_list else None
+    return shower_info_list if shower_info_list else {
+        "error": "No meteor shower information could be derived for the given period."}
 
 
 def get_meteor_shower_info_halley(comet_name, start_date, range_days=365):
