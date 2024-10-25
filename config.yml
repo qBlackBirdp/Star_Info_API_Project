@@ -1,6 +1,6 @@
 database:
   user: root
   password: "1234"
-  host: mysql_db
+  host: mysql_container
   port: 3306
   database: STAR_INFO_API_DB

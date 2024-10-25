@@ -16,12 +16,12 @@ services:
     volumes:
       - .:/app
       - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
-    command: ["python", "run.py"]
+    command: ["sh", "-c", "./wait-for-it.sh mysql_container:3306 -- flask db upgrade && python run.py"]
     depends_on:
       mysql_db:
         condition: service_healthy
     networks:
-      - my_network  # 네트워크 설정 추가
+      - my_network
 
   mysql_db:
     image: mariadb:10.4
@@ -39,7 +39,7 @@ services:
       interval: 10s
       retries: 3
     networks:
-      - my_network  # 네트워크 설정 추가
+      - my_network
 
 volumes:
   mysql_data:  # 데이터 영속성을 위한 볼륨 선언

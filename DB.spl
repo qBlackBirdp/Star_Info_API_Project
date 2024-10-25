@@ -3,6 +3,22 @@ DROP DATABASE IF EXISTS `STAR_INFO_API_DB`;
 CREATE DATABASE `STAR_INFO_API_DB`;
 USE `STAR_INFO_API_DB`;
 
+-- 유성우 데이터 테이블
+CREATE TABLE meteor_shower_info (
+                                    id INT AUTO_INCREMENT PRIMARY KEY,
+                                    comet_name VARCHAR(100) NOT NULL,
+                                    name VARCHAR(100) NOT NULL,
+                                    peak_period VARCHAR(50) NOT NULL,
+                                    peak_start_date DATE NOT NULL,
+                                    peak_end_date DATE NOT NULL,
+                                    message VARCHAR(255) NOT NULL,
+                                    conditions_used VARCHAR(100) NOT NULL,
+                                    status VARCHAR(50) NOT NULL,
+                                    distance VARCHAR(50),
+                                    ra VARCHAR(50),
+                                    declination VARCHAR(50)
+);
+
 -- 행성 정보 테이블 생성
 CREATE TABLE planet_info (
                              planet_code INT PRIMARY KEY,
@@ -23,126 +39,8 @@ INSERT INTO planet_info (planet_code, planet_name) VALUES
 
 -- 각 행성에 대한 테이블 생성 (1년치 데이터를 저장)
 
--- 수성 (Mercury, 행성 코드: 199)
-CREATE TABLE mercury_2024_raw_data (
-                                                id INT AUTO_INCREMENT PRIMARY KEY,
-                                                planet_code INT NOT NULL,
-                                                reg_date DATE NOT NULL,
-                                                distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
-);
-
--- 금성 (Venus, 행성 코드: 299)
-CREATE TABLE venus_2024_raw_data (
-                                              id INT AUTO_INCREMENT PRIMARY KEY,
-                                              planet_code INT NOT NULL,
-                                              reg_date DATE NOT NULL,
-                                              distance DOUBLE NOT NULL,
-                                              s_o_t DOUBLE NOT NULL
-);
-
--- 화성 (Mars, 행성 코드: 499)
-CREATE TABLE mars_2024_raw_data (
-                                             id INT AUTO_INCREMENT PRIMARY KEY,
-                                             planet_code INT NOT NULL,
-                                             reg_date DATE NOT NULL,
-                                             distance DOUBLE NOT NULL,
-                                             s_o_t DOUBLE NOT NULL
-);
-
--- 목성 (Jupiter, 행성 코드: 599)
-CREATE TABLE jupiter_2024_raw_data (
-                                                id INT AUTO_INCREMENT PRIMARY KEY,
-                                                planet_code INT NOT NULL,
-                                                reg_date DATE NOT NULL,
-                                                distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
-);
-
--- 토성 (Saturn, 행성 코드: 699)
-CREATE TABLE saturn_2024_raw_data (
-                                               id INT AUTO_INCREMENT PRIMARY KEY,
-                                               planet_code INT NOT NULL,
-                                               reg_date DATE NOT NULL,
-                                               distance DOUBLE NOT NULL,
-                                               s_o_t DOUBLE NOT NULL
-);
-
--- 천왕성 (Uranus, 행성 코드: 799)
-CREATE TABLE uranus_2024_raw_data (
-                                               id INT AUTO_INCREMENT PRIMARY KEY,
-                                               planet_code INT NOT NULL,
-                                               reg_date DATE NOT NULL,
-                                               distance DOUBLE NOT NULL,
-                                               s_o_t DOUBLE NOT NULL
-);
-
--- 해왕성 (Neptune, 행성 코드: 899)
-CREATE TABLE neptune_2024_raw_data (
-                                                id INT AUTO_INCREMENT PRIMARY KEY,
-                                                planet_code INT NOT NULL,
-                                                reg_date DATE NOT NULL,
-                                                distance DOUBLE NOT NULL,
-                                                s_o_t DOUBLE NOT NULL
-);
-
--- 명왕성 (Pluto, 행성 코드: 999)
-CREATE TABLE pluto_2024_raw_data (
-                                              id INT AUTO_INCREMENT PRIMARY KEY,
-                                              planet_code INT NOT NULL,
-                                              reg_date DATE NOT NULL,
-                                              distance DOUBLE NOT NULL,
-                                              s_o_t DOUBLE NOT NULL
-);
-
-
--- 수성 테이블 조회
-SELECT * FROM mercury_2024_raw_data;
-SELECT * FROM mercury_2025_raw_data;
-SELECT * FROM mercury_2026_raw_data;
-SELECT * FROM mercury_2027_raw_data;
-
--- 금성 테이블 조회
-SELECT * FROM venus_2024_raw_data;
-SELECT * FROM venus_2025_raw_data;
-SELECT * FROM venus_2026_raw_data;
-SELECT * FROM venus_2027_raw_data;
-
--- 화성 테이블 조회
-SELECT * FROM mars_2024_raw_data;
-SELECT * FROM mars_2025_raw_data;
-SELECT * FROM mars_2025_raw_data;
-SELECT * FROM mars_2025_raw_data;
-
--- 목성 테이블 조회
-SELECT * FROM jupiter_2024_raw_data;
-SELECT * FROM jupiter_2025_raw_data;
-SELECT * FROM jupiter_2026_raw_data;
-SELECT * FROM jupiter_2027_raw_data;
-
--- 토성 테이블 조회
-SELECT * FROM saturn_2024_raw_data;
-SELECT * FROM saturn_2025_raw_data;
-SELECT * FROM saturn_2026_raw_data;
-SELECT * FROM saturn_2027_raw_data;
-
--- 천왕성 테이블 조회
-SELECT * FROM uranus_2024_raw_data;
-SELECT * FROM uranus_2025_raw_data;
-SELECT * FROM uranus_2026_raw_data;
-SELECT * FROM uranus_2027_raw_data;
-
--- 해왕성 테이블 조회
-SELECT * FROM neptune_2024_raw_data;
-SELECT * FROM neptune_2025_raw_data;
-SELECT * FROM neptune_2026_raw_data;
-SELECT * FROM neptune_2027_raw_data;
-
--- 명왕성 테이블 조회
-SELECT * FROM pluto_2024_raw_data;
-SELECT * FROM pluto_2025_raw_data;
-SELECT * FROM pluto_2026_raw_data;
-SELECT * FROM pluto_2027_raw_data;
+-- 2024 행성 데이터 조회
+SELECT * FROM planet_raw_data_2024;
 
 -- 행성 이름 조회
 SELECT * FROM planet_info;

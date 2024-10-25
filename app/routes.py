@@ -1,5 +1,6 @@
 # 모든 API 엔드포인트 정의
 # app/routes.py
+import logging
 
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
@@ -67,6 +68,7 @@ def get_validated_params():
 
 @main.route('/api/constellations', methods=['GET'])
 def get_constellations():
+    logging.debug("Received request for /api/constellations")
     """
     사용자가 요청한 위도, 경도, 날짜 범위에 따라 별자리 정보를 반환하는 API 엔드포인트
     """

@@ -6,7 +6,7 @@ import atexit
 
 # 타임스케일 및 행성 데이터 로드 (전역 로드)
 ts = load.timescale()
-planets = load('/de440.bsp')
+planets = load('app/data/de440.bsp')
 
 # 지구 객체 생성 (전역 로드)
 earth = planets['earth']

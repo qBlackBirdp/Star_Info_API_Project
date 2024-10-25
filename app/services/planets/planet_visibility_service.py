@@ -1,4 +1,4 @@
-# services/planet_visibility_service.py
+# services/planet/planet_visibility_service.py
 
 from datetime import datetime, timedelta
 from skyfield import almanac
@@ -6,8 +6,9 @@ from skyfield.api import Topos
 from app.global_resources import ts, planets  # 전역 리소스 임포트
 from app.services.sunrise_sunset_service import calculate_sunrise_sunset_for_range  # 일출 및 일몰 계산 함수 import
 from app.services.timezone_conversion_service import convert_utc_to_local_time  # 시간 변환 함수 import
-from global_db_connection import get_db_connection
-from app.data.data import get_skyfield_planet_code, get_db_planet_code
+from app.data.data import get_skyfield_planet_code
+from app.models.planet_raw_data import get_planet_raw_data_model
+from app import db
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, timezone_info=None):
@@ -44,23 +45,13 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
     # 천체력에서 행성 가져오기
     planet = planets[skyfield_planet_code]
 
-    # DB 연결 가져오기
-    conn = get_db_connection()
-    if conn is None:
-        return [{"error": "Failed to connect to the database."}]
-
     # DB에서 데이터 조회
-    cursor = None
     try:
-        cursor = conn.cursor()
-        # 데이터 조회 쿼리 추가
-        table_name = f"{planet_name.lower()}_{date.year}_raw_data"
-        select_query = f"""
-            SELECT reg_date, distance, s_o_t FROM {table_name}
-            WHERE planet_code = %s AND reg_date BETWEEN %s AND %s
-        """
-        cursor.execute(select_query, (get_db_planet_code(planet_name), date, end_date))
-        rows = cursor.fetchall()
+        PlanetRawDataYear = get_planet_raw_data_model(date.year)
+        rows = db.session.query(PlanetRawDataYear).filter(
+            PlanetRawDataYear.planet_name == planet_name,
+            PlanetRawDataYear.reg_date.between(date, end_date)
+        ).all()
 
         if not rows:
             return [{"error": f"No data available for {planet_name} in the specified date range."}]
@@ -68,7 +59,9 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
         results = []
 
         for row, sunrise_sunset_data in zip(rows, sunrise_sunset_data_list):
-            reg_date, delta, s_o_t = row
+            reg_date = row.reg_date
+            delta = row.distance
+            s_o_t = row.s_o_t
 
             t0 = ts.utc(reg_date.year, reg_date.month, reg_date.day, 0, 0, 0)
             t1 = ts.utc(reg_date.year, reg_date.month, reg_date.day, 23, 59, 59)
@@ -148,8 +141,5 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
 
     except Exception as e:
         return [{"error": f"Database operation failed: {e}"}]
-    finally:
-        if cursor:
-            cursor.close()
 
     return results
