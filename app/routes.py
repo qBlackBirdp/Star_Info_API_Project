@@ -258,22 +258,26 @@ def update_meteor_raw_data():
 @main.route('/api/meteor_shower_visibility', methods=['GET'])
 def fetch_meteor_shower_data():
     """
-    유성우 이름과 연도를 기준으로 유성우 데이터를 조회하는 엔드포인트
+    유성우 이름, 연도, 위도, 경도를 기준으로 유성우 가시성을 평가하는 엔드포인트
 
     Query Params:
         name (str): 유성우의 이름 (필수).
         year (int): 조회할 연도 (필수).
+        latitude (float): 관측자의 위도 (필수).
+        longitude (float): 관측자의 경도 (필수).
 
     Returns:
-        JSON: 유성우 정보 리스트 또는 에러 메시지.
+        JSON: 유성우 가시성 평가 결과 또는 에러 메시지.
     """
     # 요청에서 쿼리 파라미터를 가져오기
     name = request.args.get('name')
     year = request.args.get('year')
+    latitude = request.args.get('latitude')
+    longitude = request.args.get('longitude')
 
     # 필수 파라미터 체크
-    if not name or not year:
-        return jsonify({"error": "Missing required query parameters: name and year"}), 400
+    if not name or not year or not latitude or not longitude:
+        return jsonify({"error": "Missing required query parameters: name, year, latitude, and longitude"}), 400
 
     try:
         # 연도 파라미터를 정수로 변환
@@ -281,8 +285,15 @@ def fetch_meteor_shower_data():
     except ValueError:
         return jsonify({"error": "Year must be an integer."}), 400
 
-    # 유성우 데이터 조회를 서비스 레이어에 위임
-    data = meteor_shower_visibility_service.get_meteor_shower_data(name, year)
+    try:
+        # 위도와 경도 파라미터를 실수로 변환
+        latitude = float(latitude)
+        longitude = float(longitude)
+    except ValueError:
+        return jsonify({"error": "Latitude and longitude must be floating-point numbers."}), 400
+
+    # 유성우 가시성 평가를 서비스 레이어에 위임
+    data = meteor_shower_visibility_service.evaluate_meteor_shower_visibility(name, year, latitude, longitude)
     if "error" in data:
         return jsonify(data), 404
 

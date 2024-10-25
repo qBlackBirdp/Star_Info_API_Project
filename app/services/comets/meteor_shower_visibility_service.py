@@ -2,6 +2,9 @@
 
 from app.models.meteor_shower_raw_data import MeteorShowerInfo
 from app import db
+from datetime import datetime
+from app.services.comets.commet_utils import calculate_altitude_azimuth  # 고도 계산에 사용할 유틸리티 함수
+from app.services.directions_utils import azimuth_to_direction  # 동서남북 변환 함수 import
 
 
 def get_meteor_shower_data(shower_name, year):
@@ -23,7 +26,7 @@ def get_meteor_shower_data(shower_name, year):
         results = query.all()
 
         if not results:
-            return {"error": "No meteor shower data found for the specified name and year."}
+            return []
 
         # 조회된 데이터를 리스트로 반환
         return [
@@ -44,3 +47,74 @@ def get_meteor_shower_data(shower_name, year):
         ]
     except Exception as e:
         return {"error": f"Database operation failed: {e}"}
+
+
+def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
+    """
+    유성우의 가시성을 평가하는 함수
+
+    Args:
+        shower_name (str): 유성우의 이름.
+        year (int): 조회할 연도.
+        latitude (float): 관측자의 위도.
+        longitude (float): 관측자의 경도.
+
+    Returns:
+        dict: 가시성 평가 결과.
+    """
+    try:
+        # 유성우 데이터 조회
+        meteor_shower_data = get_meteor_shower_data(shower_name, year)
+
+        if isinstance(meteor_shower_data, dict) and "error" in meteor_shower_data:
+            return meteor_shower_data
+
+        if not meteor_shower_data:
+            return {"error": "No meteor shower data found for the specified name and year."}
+
+        visibility_results = []
+
+        for data in meteor_shower_data:
+            # 유성우의 적경(RA)과 적위(Dec)을 사용하여 고도와 방위각 계산
+            ra = data["ra"]
+            dec = data["declination"]
+            peak_date = datetime.fromisoformat(data["peak_start_date"])
+            elevation = 0  # 해수면 고도로 설정
+
+            # 고도와 방위각 계산 (Skyfield 기반의 calculate_altitude_azimuth 함수 사용)
+            altitude, azimuth = calculate_altitude_azimuth(ra, dec, data["distance"], latitude, longitude, elevation,
+                                                           peak_date)
+
+            # 방위각을 동서남북 방향으로 변환
+            direction = azimuth_to_direction(azimuth)
+
+            # 고도가 일정 기준 이상인 경우 가시성이 있는 것으로 판단
+            visibility_result = {
+                "name": data["name"],
+                "comet_name": data["comet_name"],
+                "peak_period": data["peak_period"],
+                "peak_start_date": data["peak_start_date"],
+                "peak_end_date": data["peak_end_date"],
+                "message": data["message"],
+                "conditions_used": data["conditions_used"],
+                "status": data["status"],
+                "distance": data["distance"],
+                "ra": data["ra"],
+                "declination": data["declination"],
+                "altitude": altitude,
+                "direction": direction,
+                "latitude": latitude,
+                "longitude": longitude,
+            }
+
+            if altitude > 15.0:  # 고도가 15도 이상이어야 관측 가능하다고 판단
+                visibility_result["visibility_message"] = "Meteor shower is visible."
+            else:
+                visibility_result["visibility_message"] = "Altitude is too low for visibility."
+
+            visibility_results.append(visibility_result)
+
+        return {"visibility_results": visibility_results}
+
+    except Exception as e:
+        return {"error": f"Failed to evaluate meteor shower visibility: {e}"}

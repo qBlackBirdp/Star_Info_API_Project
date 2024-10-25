@@ -9,6 +9,7 @@ from app.services.timezone_conversion_service import convert_utc_to_local_time  
 from app.data.data import get_skyfield_planet_code
 from app.models.planet_raw_data import get_planet_raw_data_model
 from app import db
+from app.services.directions_utils import azimuth_to_direction
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, timezone_info=None):
@@ -106,24 +107,7 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
 
             # 방위각을 동서남북 방향으로 변환
             azimuth = az.degrees
-            if 0 <= azimuth < 22.5 or 337.5 <= azimuth <= 360:
-                direction = "North"
-            elif 22.5 <= azimuth < 67.5:
-                direction = "Northeast"
-            elif 67.5 <= azimuth < 112.5:
-                direction = "East"
-            elif 112.5 <= azimuth < 157.5:
-                direction = "Southeast"
-            elif 157.5 <= azimuth < 202.5:
-                direction = "South"
-            elif 202.5 <= azimuth < 247.5:
-                direction = "Southwest"
-            elif 247.5 <= azimuth < 292.5:
-                direction = "West"
-            elif 292.5 <= azimuth < 337.5:
-                direction = "Northwest"
-            else:
-                direction = "Unknown"
+            direction = azimuth_to_direction(azimuth)
 
             results.append({
                 "date": reg_date.strftime("%Y-%m-%d"),

@@ -19,7 +19,7 @@ def parse_ra_dec(ra_str, dec_str):
     return ra_hours, dec_degrees
 
 
-def calculate_altitude(ra_str, dec_str, delta, latitude, longitude, elevation, approach_time):
+def calculate_altitude_azimuth(ra_str, dec_str, delta, latitude, longitude, elevation, approach_time):
     # 적경(RA)과 적위(Dec)를 문자열에서 변환
     ra_hours, dec_degrees = parse_ra_dec(ra_str, dec_str)
     print(f"Converted RA (hours): {ra_hours}, Converted Dec (degrees): {dec_degrees}")
@@ -42,8 +42,8 @@ def calculate_altitude(ra_str, dec_str, delta, latitude, longitude, elevation, a
     # 고도와 방위각을 계산할 때 관측자의 위치를 명시적으로 제공
     alt, az, distance = astrometric.altaz()
 
-    # 고도 값 반환
-    return alt.degrees
+    # 고도와 방위각 값 반환
+    return alt.degrees, az.degrees
 
 
 def analyze_comet_data(data):
@@ -125,4 +125,4 @@ def detect_closing_or_receding(sorted_data):
         return {"error": f"Failed to detect closing or receding status: {str(e)}"}
 
 
-__all__ = ['analyze_comet_data', 'detect_closing_or_receding', 'parse_ra_dec']
+__all__ = ['analyze_comet_data', 'detect_closing_or_receding', 'parse_ra_dec', 'calculate_altitude_azimuth']

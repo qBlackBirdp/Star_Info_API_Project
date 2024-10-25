@@ -8,6 +8,8 @@ import logging
 from multiprocessing import Pool
 from functools import lru_cache
 
+from app.services.directions_utils import azimuth_to_direction
+
 logging.basicConfig(level=logging.DEBUG)
 
 # 한국 평균 고도 (고도 값 대략 100m 설정)
@@ -98,23 +100,7 @@ def process_day_data(day_data, latitude, longitude):
 
         # 방위경을 동서남북 분포로 변환
         azimuth = azimuths.degrees[best_index]
-        direction = "Unknown"
-        if 0 <= azimuth < 22.5 or 337.5 <= azimuth <= 360:
-            direction = "North"
-        elif 22.5 <= azimuth < 67.5:
-            direction = "Northeast"
-        elif 67.5 <= azimuth < 112.5:
-            direction = "East"
-        elif 112.5 <= azimuth < 157.5:
-            direction = "Southeast"
-        elif 157.5 <= azimuth < 202.5:
-            direction = "South"
-        elif 202.5 <= azimuth < 247.5:
-            direction = "Southwest"
-        elif 247.5 <= azimuth < 292.5:
-            direction = "West"
-        elif 292.5 <= azimuth < 337.5:
-            direction = "Northwest"
+        direction = azimuth_to_direction(azimuth)
 
         return {
             "date": day_data["date"],
