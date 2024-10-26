@@ -3,7 +3,7 @@
 # 과거 관측 데이터를 기반으로 한 혜성별 유성우 극대기까지의 평균 일 수
 COMET_PERIHELION_PEAK_OFFSET = {
     "Halley": 75,  # 에타 아쿠아리드 유성우는 근일점 통과 후 약 75일 뒤 극대기 발생
-    "Encke": 50,  # 타우리드 유성우는 근일점 통과 후 약 50일 뒤 극대기 발생
+    # "Encke": 50,  # 타우리드 유성우는 근일점 통과 후 약 50일 뒤 극대기 발생
     "Tuttle": 80,  # 우르시드 유성우는 근일점 통과 후 약 80일 뒤 극대기 발생
     "Giacobini-Zinner": 40,  # 드라코니드 유성우는 근일점 통과 후 약 40일 뒤 극대기 발생
     "Tempel-Tuttle": 100,  # 레오니드 유성우는 근일점 통과 후 약 100일 뒤 극대기 발생
@@ -24,10 +24,10 @@ COMET_CONDITIONS = {
         "min_altitude": 12.0,  # 최소 고도 (12도)
         "min_elongation": 25.0  # 최소 신축각 (25도)
     },
-    "Encke": {
-        "min_altitude": 8.0,  # 최소 고도 (8도)
-        "min_elongation": 15.0  # 최소 신축각 (15도)
-    },
+    # "Encke": {
+    #     "min_altitude": 8.0,  # 최소 고도 (8도)
+    #     "min_elongation": 15.0  # 최소 신축각 (15도)
+    # },
     "Swift-Tuttle": {
         "min_altitude": 18.0,  # 최소 고도 (18도)
         "min_elongation": 35.0  # 최소 신축각 (35도)
@@ -79,13 +79,13 @@ METEOR_SHOWERS = {
 
 # 비주기 메테오
 NON_ANNUAL_METEOR_SHOWERS = {
-    "Encke": [
-        {
-            "name": "Taurid",
-            "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
-            "annual": False
-        }
-    ],
+    # "Encke": [
+    #     {
+    #         "name": "Taurid",
+    #         "estimated_peak_period": "Based on comet's closest approach",  # 혜성 접근 주기에 따라 발생
+    #         "annual": False
+    #     }
+    # ],
     "Giacobini-Zinner": [
         {
             "name": "Draconid",
@@ -148,7 +148,7 @@ PLANET_CODES = {
 
 COMET_CODES = {
     "Halley": "1P",  # 할리 혜성 (주기: 약 76년, 오리온자리 유성우 및 에타 아쿠아리드 유성우의 원인)
-    "Encke": "2P",  # 엔케 혜성 (주기: 약 3.3년)
+    # "Encke": "2P",  # 엔케 혜성 (주기: 약 3.3년)
     "Tuttle": "8P",  # 터틀 혜성 (주기: 약 13.5년, 우르시드 유성우의 원인)
     "Giacobini-Zinner": "21P",  # 자코비니-진너 혜성 (주기: 약 6.6년, 드라코니드 유성우의 원인)
     "Tempel-Tuttle": "55P",  # 템플-터틀 혜성 (주기: 약 33.2년, 레오니드 유성우의 원인)

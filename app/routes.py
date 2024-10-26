@@ -5,6 +5,7 @@ import logging
 from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 
+from .services.moon_phase_service import get_moon_phase_for_date
 from .services.comets import meteor_shower_visibility_service
 from .services.comets.meteor_shower_info_storage_service import update_meteor_shower_data
 from .services.comets.meteor_shower_info import get_meteor_shower_info
@@ -298,3 +299,35 @@ def fetch_meteor_shower_data():
         return jsonify(data), 404
 
     return jsonify(data), 200
+
+
+@main.route('/api/moon_phase', methods=['GET'])
+def moon_phase():
+    """
+    특정 날짜와 위치에 대한 달의 위상을 계산하는 엔드포인트
+
+    Query Params:
+        latitude (float): 위도
+        longitude (float): 경도
+        date (str): 날짜 (YYYY-MM-DD 형식)
+
+    Returns:
+        JSON: 달의 위상 정보 또는 오류 메시지
+    """
+    try:
+        # 쿼리 매개변수 가져오기
+        date_str = request.args.get('date')
+
+        # 날짜 문자열을 datetime 객체로 변환
+        date = datetime.strptime(date_str, '%Y-%m-%d')
+
+        # 달의 위상 계산
+        moon_phase_data = get_moon_phase_for_date(date)
+
+        # 결과 반환
+        return jsonify(moon_phase_data)
+
+    except ValueError as e:
+        return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to calculate moon phase: {str(e)}"}), 500
