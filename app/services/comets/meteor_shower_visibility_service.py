@@ -5,6 +5,7 @@ from app import db
 from datetime import datetime
 from app.services.comets.commet_utils import calculate_altitude_azimuth  # 고도 계산에 사용할 유틸리티 함수
 from app.services.directions_utils import azimuth_to_direction  # 동서남북 변환 함수 import
+from app.services.moon_phase_service import get_moon_phase_for_date
 
 
 def get_meteor_shower_data(shower_name, year):
@@ -50,18 +51,6 @@ def get_meteor_shower_data(shower_name, year):
 
 
 def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
-    """
-    유성우의 가시성을 평가하는 함수
-
-    Args:
-        shower_name (str): 유성우의 이름.
-        year (int): 조회할 연도.
-        latitude (float): 관측자의 위도.
-        longitude (float): 관측자의 경도.
-
-    Returns:
-        dict: 가시성 평가 결과.
-    """
     try:
         # 유성우 데이터 조회
         meteor_shower_data = get_meteor_shower_data(shower_name, year)
@@ -88,25 +77,37 @@ def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
             # 방위각을 동서남북 방향으로 변환
             direction = azimuth_to_direction(azimuth)
 
-            # 고도가 일정 기준 이상인 경우 가시성이 있는 것으로 판단
+            # 가시성 결과 초기화
             visibility_result = {
                 "name": data["name"],
                 "comet_name": data["comet_name"],
                 "peak_period": data["peak_period"],
-                "peak_start_date": data["peak_start_date"],
-                "peak_end_date": data["peak_end_date"],
+                "peak_dates": {
+                    "start": data["peak_start_date"],
+                    "end": data["peak_end_date"]
+                },
                 "message": data["message"],
-                "conditions_used": data["conditions_used"],
-                "status": data["status"],
-                "distance": data["distance"],
-                "ra": data["ra"],
-                "declination": data["declination"],
-                "altitude": altitude,
-                "direction": direction,
-                "latitude": latitude,
-                "longitude": longitude,
+                "conditions": {
+                    "used": data["conditions_used"],
+                    "status": data["status"]
+                },
+                "coordinates": {
+                    "distance": data["distance"],
+                    "ra": data["ra"],
+                    "declination": data["declination"],
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "altitude": altitude,
+                    "direction": direction
+                }
             }
 
+            # 달의 위상 정보 추가
+            moon_phase_info = get_moon_phase_for_date(peak_date)
+            if "error" not in moon_phase_info:
+                visibility_result.update(moon_phase_info)
+
+            # 고도가 일정 기준 이상인 경우 가시성이 있는 것으로 판단
             if altitude > 15.0:  # 고도가 15도 이상이어야 관측 가능하다고 판단
                 visibility_result["visibility_message"] = "Meteor shower is visible."
             else:
