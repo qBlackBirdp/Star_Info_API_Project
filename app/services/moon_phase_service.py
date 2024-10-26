@@ -32,41 +32,47 @@ def get_moon_phase(date):
     illumination = 1 - illumination_average
 
     # 정오 기준으로 moon_phase 반환
-    moon_phase = phase_angle_noon.degrees / 360.0
+    phase_angle_degrees = phase_angle_noon.degrees
+    if phase_angle_degrees < 0:
+        phase_angle_degrees += 360
+    moon_phase = phase_angle_degrees / 360.0
 
     return {
         "moon_phase": moon_phase,
-        "phase_description": get_phase_description(moon_phase),
+        "phase_description": get_phase_description(moon_phase, phase_angle_degrees),
         "illumination": illumination,
         "date": date.strftime('%Y-%m-%d')
     }
 
 
-def get_phase_description(moon_phase):
+def get_phase_description(moon_phase, phase_angle_degrees):
     """
     달의 위상에 따라 설명을 제공하는 함수
 
     Args:
         moon_phase (float): 달의 위상 (0 ~ 1).
+        phase_angle_degrees (float): 위상 각도 (0 ~ 360).
 
     Returns:
         str: 달의 위상 설명
     """
-    if moon_phase == 0:
+    if 0 <= phase_angle_degrees <= 2 or 358 < phase_angle_degrees <= 360:
         return "New Moon"
-    elif 0 < moon_phase < 0.25:
+    elif 2 < phase_angle_degrees <= 5 or 355 <= phase_angle_degrees <= 358:
+        return "Dark Moon"  # 달이 완전히 보이지 않는 시기
+    elif 5 < phase_angle_degrees < 90:
         return "Waxing Crescent"
-    elif moon_phase == 0.25:
+    elif 85 <= phase_angle_degrees <= 95:
         return "First Quarter"
-    elif 0.25 < moon_phase < 0.5:
+    elif 90 < phase_angle_degrees < 180:
         return "Waxing Gibbous"
-    elif moon_phase == 0.5:
+    elif 175 <= phase_angle_degrees <= 185:
         return "Full Moon"
-    elif 0.5 < moon_phase < 0.75:
+    elif 180 < phase_angle_degrees < 270:
         return "Waning Gibbous"
-    elif moon_phase == 0.75:
+    elif 265 <= phase_angle_degrees <= 275:
         return "Last Quarter"
-    elif 0.75 < moon_phase < 1:
+    elif 275 < phase_angle_degrees < 355:
         return "Waning Crescent"
     else:
         return "Unknown Phase"
