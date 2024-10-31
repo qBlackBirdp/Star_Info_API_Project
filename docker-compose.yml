@@ -12,16 +12,16 @@ services:
       - "5555:5000"
     environment:
       - PYTHONUNBUFFERED=1
-      - PYTHONPATH=/app  # PYTHONPATH 설정 추가
+      - PYTHONPATH=/app
+      - FLASK_APP=run.py  # 추가: Flask 애플리케이션 설정
     volumes:
-      - .:/app
       - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
-    command: ["sh", "-c", "./wait-for-it.sh mysql_container:3306 -- flask db upgrade && python run.py"]
     depends_on:
       mysql_db:
         condition: service_healthy
     networks:
       - my_network
+    restart: always
 
   mysql_db:
     image: mariadb:10.4

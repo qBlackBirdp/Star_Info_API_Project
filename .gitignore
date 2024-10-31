@@ -10,3 +10,5 @@ __pycache__/
 
 # VSCode 설정 파일
 .vscode/
+
+mysql_data_backup.tar.gz

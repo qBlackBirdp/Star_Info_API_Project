@@ -13,12 +13,13 @@ RUN apt-get update && apt-get install -y \
     build-essential
 
 # PYTHONPATH 환경 변수 설정
-ENV PYTHONPATH "${PYTHONPATH}:/app"
+ENV PYTHONPATH=/app
 
-# requirements.txt 파일만 복사
+# FLASK_APP 환경 변수 설정 (추가)
+ENV FLASK_APP=run.py
+
+# requirements.txt 파일만 복사 및 파이썬 패키지 설치
 COPY requirements.txt /app/
-
-# 필요한 파이썬 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 현재 디렉터리의 모든 파일을 Docker 이미지의 /app 디렉터리로 복사
