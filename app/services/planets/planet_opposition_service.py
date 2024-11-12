@@ -5,6 +5,7 @@ import logging
 from app.data.data import get_opposition_au_threshold
 from app import db
 from app.models.planet_raw_data import get_planet_raw_data_model
+from app.services.db_utils import retry_query
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,7 +33,7 @@ def predict_opposition_events(planet_name, year, strict=False):
                 PlanetRawDataYear.distance <= get_opposition_au_threshold(planet_name, strict)
             ).order_by(PlanetRawDataYear.distance.asc()).limit(5)
 
-            rows = query.all()
+            rows = retry_query(db.session, query)
 
             for closest_event in rows:
                 reg_date = closest_event.reg_date

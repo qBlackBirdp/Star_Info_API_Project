@@ -1,11 +1,7 @@
+import json
 from datetime import datetime
 import requests
 import os
-import logging
-
-# 로그 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # 타임존 정보 캐시
 cached_timezone_info = {}
@@ -20,7 +16,7 @@ def get_timezone_info(lat, lon, timestamp):
     # 캐싱된 값이 있는지 확인
     cache_key = (lat, lon)  # 캐시 키에서 timestamp 제거
     if cache_key in cached_timezone_info:
-        logger.info(f"Using cached timezone info for lat: {lat}, lon: {lon}")
+        print(f"Using cached timezone info for lat: {lat}, lon: {lon}")
         return cached_timezone_info[cache_key]
 
     base_url = "https://maps.googleapis.com/maps/api/timezone/json"
@@ -30,9 +26,14 @@ def get_timezone_info(lat, lon, timestamp):
         'key': api_key
     }
     # 로그 추가 - API 요청 시 로그 남기기
-    logger.info(f"Requesting Google Time Zone API for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
+    print(f"Requesting Google Time Zone API for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
+    print(f"Request parameters: {json.dumps(params)}")
 
     response = requests.get(base_url, params=params)
+
+    # 로그 추가 - 응답 상태 코드와 내용 기록
+    print(f"Response status code: {response.status_code}")
+    print(f"Response content: {response.text}")
 
     if response.status_code == 200:
         timezone_data = response.json()

@@ -6,6 +6,7 @@ from datetime import datetime
 from app.services.comets.commet_utils import calculate_altitude_azimuth  # 고도 계산에 사용할 유틸리티 함수
 from app.services.directions_utils import azimuth_to_direction  # 동서남북 변환 함수 import
 from app.services.moon_phase_service import get_moon_phase_for_date
+from app.services.db_utils import retry_query  # retry_query 함수 import
 
 
 def get_meteor_shower_data(shower_name, year):
@@ -24,7 +25,9 @@ def get_meteor_shower_data(shower_name, year):
             MeteorShowerInfo.name == shower_name,
             MeteorShowerInfo.peak_start_date.between(f"{year}-01-01", f"{year}-12-31")
         )
-        results = query.all()
+
+        # 쿼리 실행에 리트라이 기능 추가
+        results = retry_query(db.session, query)
 
         if not results:
             return []

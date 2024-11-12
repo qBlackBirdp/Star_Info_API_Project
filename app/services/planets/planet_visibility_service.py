@@ -10,6 +10,7 @@ from app.data.data import get_skyfield_planet_code
 from app.models.planet_raw_data import get_planet_raw_data_model
 from app import db
 from app.services.directions_utils import azimuth_to_direction
+from app.services.db_utils import retry_query
 
 
 def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, timezone_info=None):
@@ -49,10 +50,12 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
     # DB에서 데이터 조회
     try:
         PlanetRawDataYear = get_planet_raw_data_model(date.year)
-        rows = db.session.query(PlanetRawDataYear).filter(
+        query = db.session.query(PlanetRawDataYear).filter(
             PlanetRawDataYear.planet_name == planet_name,
             PlanetRawDataYear.reg_date.between(date, end_date)
-        ).all()
+        )
+
+        rows = retry_query(db.session, query)
 
         if not rows:
             return [{"error": f"No data available for {planet_name} in the specified date range."}]
