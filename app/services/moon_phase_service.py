@@ -16,63 +16,73 @@ def get_moon_phase(date):
     Returns:
         dict: 달의 위상 정보 (0 = 뉴문, 1 = 보름달)과 조명율(0 ~ 1).
     """
-    # 자정과 정오 두 번의 UTC 시간을 사용
-    observation_time_midnight = ts.utc(date.year, date.month, date.day, 0)
-    observation_time_noon = ts.utc(date.year, date.month, date.day, 12)
+    # 하루 동안 여덟 개의 UTC 시간을 사용 (3시간 간격)
+    observation_times = [
+        ts.utc(date.year, date.month, date.day, 0),
+        ts.utc(date.year, date.month, date.day, 3),
+        ts.utc(date.year, date.month, date.day, 6),
+        ts.utc(date.year, date.month, date.day, 9),
+        ts.utc(date.year, date.month, date.day, 12),
+        ts.utc(date.year, date.month, date.day, 15),
+        ts.utc(date.year, date.month, date.day, 18),
+        ts.utc(date.year, date.month, date.day, 21)
+    ]
 
-    # 자정과 정오 각각의 위상 각도 계산
-    phase_angle_midnight = almanac.moon_phase(planets, observation_time_midnight)
-    phase_angle_noon = almanac.moon_phase(planets, observation_time_noon)
+    # 여덟 시점 각각의 위상 각도와 조명률 계산
+    phase_angles = [almanac.moon_phase(planets, t) for t in observation_times]
+    illuminations = [(1 + math.cos(angle.radians)) / 2 for angle in phase_angles]
 
-    # 조명율 계산 (0 ~ 1 사이의 값) 두 번 계산한 뒤 평균
-    illumination_midnight = (1 + math.cos(phase_angle_midnight.radians)) / 2
-    illumination_noon = (1 + math.cos(phase_angle_noon.radians)) / 2
-    illumination_average = (illumination_midnight + illumination_noon) / 2
-
+    # 조명율 평균 계산
+    illumination_average = sum(illuminations) / len(illuminations)
     illumination = 1 - illumination_average
 
-    # 정오 기준으로 moon_phase 반환
-    phase_angle_degrees = phase_angle_noon.degrees
-    if phase_angle_degrees < 0:
-        phase_angle_degrees += 360
-    moon_phase = phase_angle_degrees / 360.0
+    # moon_phase를 여덟 시점의 평균 위상 각도로 계산
+    phase_angle_average = sum(angle.degrees for angle in phase_angles) / len(phase_angles)
+    if phase_angle_average < 0:
+        phase_angle_average += 360
+    moon_phase = phase_angle_average / 360.0
 
     return {
         "moon_phase": moon_phase,
-        "phase_description": get_phase_description(moon_phase, phase_angle_degrees),
+        "phase_description": get_phase_description(moon_phase, phase_angle_average, illumination),
         "illumination": illumination,
         "date": date.strftime('%Y-%m-%d')
     }
 
 
-def get_phase_description(moon_phase, phase_angle_degrees):
+def get_phase_description(moon_phase, phase_angle_degrees, illumination):
     """
     달의 위상에 따라 설명을 제공하는 함수
 
     Args:
         moon_phase (float): 달의 위상 (0 ~ 1).
         phase_angle_degrees (float): 위상 각도 (0 ~ 360).
+        illumination (float): 달의 조명률 (0 ~ 1).
 
     Returns:
         str: 달의 위상 설명
     """
-    if 0 <= phase_angle_degrees <= 2 or 358 < phase_angle_degrees <= 360:
+    # 조명률이 0.98 이상이면 보름달로 강제 설정
+    if illumination >= 0.99:
+        return "Full Moon"
+
+    if 0 <= phase_angle_degrees <= 5 or 355 < phase_angle_degrees <= 360:
         return "New Moon"
-    elif 2 < phase_angle_degrees <= 5 or 355 <= phase_angle_degrees <= 358:
-        return "Dark Moon"  # 달이 완전히 보이지 않는 시기
-    elif 5 < phase_angle_degrees < 90:
+    elif 5 < phase_angle_degrees <= 10 or 350 <= phase_angle_degrees <= 355:
+        return "Dark Moon"  # 달이 거의 완전히 보이지 않는 시기
+    elif 10 < phase_angle_degrees < 85:
         return "Waxing Crescent"
     elif 85 <= phase_angle_degrees <= 95:
         return "First Quarter"
-    elif 90 < phase_angle_degrees < 180:
+    elif 95 < phase_angle_degrees < 175:
         return "Waxing Gibbous"
-    elif 175 <= phase_angle_degrees <= 185:
+    elif 170 <= phase_angle_degrees <= 190:
         return "Full Moon"
-    elif 180 < phase_angle_degrees < 270:
+    elif 190 < phase_angle_degrees < 265:
         return "Waning Gibbous"
     elif 265 <= phase_angle_degrees <= 275:
         return "Last Quarter"
-    elif 275 < phase_angle_degrees < 355:
+    elif 275 < phase_angle_degrees < 350:
         return "Waning Crescent"
     else:
         return "Unknown Phase"
