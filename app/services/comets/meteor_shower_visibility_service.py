@@ -1,12 +1,11 @@
 # services/comets/meteor_shower_visibility_service.py
 
 from app.models.meteor_shower_raw_data import MeteorShowerInfo
-from app import db
 from datetime import datetime
 from app.services.comets.commet_utils import calculate_altitude_azimuth  # 고도 계산에 사용할 유틸리티 함수
 from app.services.directions_utils import azimuth_to_direction  # 동서남북 변환 함수 import
 from app.services.moon_phase_service import get_moon_phase_for_date
-from app.services.db_utils import retry_query  # retry_query 함수 import
+from app.db.db_utils import retry_query, get_session  # get_session 함수 import
 
 
 def get_meteor_shower_data(shower_name, year):
@@ -21,39 +20,52 @@ def get_meteor_shower_data(shower_name, year):
         list: 유성우 정보 리스트 또는 에러 메시지.
     """
     try:
-        query = db.session.query(MeteorShowerInfo).filter(
-            MeteorShowerInfo.name == shower_name,
-            MeteorShowerInfo.peak_start_date.between(f"{year}-01-01", f"{year}-12-31")
-        )
+        with get_session() as session:
+            query = session.query(MeteorShowerInfo).filter(
+                MeteorShowerInfo.name == shower_name,
+                MeteorShowerInfo.peak_start_date.between(f"{year}-01-01", f"{year}-12-31")
+            )
 
-        # 쿼리 실행에 리트라이 기능 추가
-        results = retry_query(db.session, query)
+            # 쿼리 실행에 리트라이 기능 추가
+            results = retry_query(session, query)
 
-        if not results:
-            return []
+            if not results:
+                return []
 
-        # 조회된 데이터를 리스트로 반환
-        return [
-            {
-                "name": row.name,
-                "comet_name": row.comet_name,
-                "peak_period": row.peak_period,
-                "peak_start_date": row.peak_start_date.isoformat(),
-                "peak_end_date": row.peak_end_date.isoformat(),
-                "message": row.message,
-                "conditions_used": row.conditions_used,
-                "status": row.status,
-                "distance": row.distance,
-                "ra": row.ra,
-                "declination": row.declination
-            }
-            for row in results
-        ]
+            # 조회된 데이터를 리스트로 반환
+            return [
+                {
+                    "name": row.name,
+                    "comet_name": row.comet_name,
+                    "peak_period": row.peak_period,
+                    "peak_start_date": row.peak_start_date.isoformat(),
+                    "peak_end_date": row.peak_end_date.isoformat(),
+                    "message": row.message,
+                    "conditions_used": row.conditions_used,
+                    "status": row.status,
+                    "distance": row.distance,
+                    "ra": row.ra,
+                    "declination": row.declination
+                }
+                for row in results
+            ]
     except Exception as e:
         return {"error": f"Database operation failed: {e}"}
 
 
 def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
+    """
+    특정 유성우의 가시성을 평가하는 함수
+
+    Args:
+        shower_name (str): 유성우 이름.
+        year (int): 조회할 연도.
+        latitude (float): 관측 위치의 위도.
+        longitude (float): 관측 위치의 경도.
+
+    Returns:
+        dict: 가시성 평가 결과.
+    """
     try:
         # 유성우 데이터 조회
         meteor_shower_data = get_meteor_shower_data(shower_name, year)

@@ -6,9 +6,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import logging
 from multiprocessing import Pool
-from functools import lru_cache
-
 from app.services.directions_utils import azimuth_to_direction
+from app import cache  # Flask-Caching import
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,13 +15,7 @@ logging.basicConfig(level=logging.DEBUG)
 KOREA_AVERAGE_ALTITUDE = 480  # meters
 
 
-# 캐시 적용: 별자리 가시성 정보를 캐싱하여 중복 계산을 방지
-@lru_cache(maxsize=128)
-def process_day_data_cached(day_data_tuple, latitude, longitude):
-    day_data = dict(day_data_tuple)  # 튜플을 딕셔너리로 변환
-    return process_day_data(day_data, latitude, longitude)
-
-
+@cache.memoize(timeout=3600)  # 캐싱 적용 (1시간)
 def process_day_data(day_data, latitude, longitude):
     """
     주어진 날짜와 위치에서 특정 별자리가 가장 잘 보인다고 예상되는 시간대를 계산하는 함수
@@ -35,6 +28,9 @@ def process_day_data(day_data, latitude, longitude):
     Returns:
         dict: 별자리의 가장 잘 보인다고 예상되는 시간대 정보
     """
+    latitude = round(latitude, 4)
+    longitude = round(longitude, 4)
+
     constellation_name = day_data.get("constellation", "Unknown")
     try:
         if "error" in day_data:
@@ -130,9 +126,12 @@ def calculate_visibility_for_constellations_parallel(constellation_data, latitud
     Returns:
         list: 가시성 정보가 추가된 별자리 정보 리스트
     """
+    latitude = round(latitude, 4)
+    longitude = round(longitude, 4)
+
     with Pool() as pool:
-        results = pool.starmap(process_day_data_cached,
-                               [(tuple(day.items()), latitude, longitude) for day in constellation_data])
+        results = pool.starmap(process_day_data,
+                               [(day, latitude, longitude) for day in constellation_data])
     return results
 
 

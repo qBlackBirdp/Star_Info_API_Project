@@ -3,10 +3,12 @@
 from datetime import datetime
 from app.data.data import METEOR_SHOWERS, LENIENT_CONDITIONS, COMET_PERIHELION_PEAK_OFFSET
 from app.services.comets.comet_approach_service import get_comet_approach_data
+from app import cache
 
 ERROR_MARGIN_DAYS = 31  # 극대기의 추정 오차 범위 (±5일)
 
 
+@cache.memoize(timeout=3600)
 def get_meteor_shower_info(comet_name, start_date, range_days=365):
     """
     혜성과 관련된 유성우 정보를 반환하는 함수.

@@ -8,8 +8,10 @@ from app.services.comets.commet_utils import parse_ra_dec, analyze_comet_data, d
 from app.services.comets.halley_service import get_halley_approach_data
 from app.services.comets.tuttle_service import get_tuttle_approach_data
 from app.services.comets.swift_tuttle_service import get_swift_tuttle_approach_data
+from app import cache
 
 
+@cache.memoize(timeout=3600)
 def get_comet_approach_data(comet_name, start_date, range_days=365):
     try:
         # 혜성별로 특화된 로직 처리

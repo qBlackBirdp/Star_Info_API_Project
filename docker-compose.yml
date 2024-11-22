@@ -14,10 +14,14 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
       - FLASK_APP=run.py  # 추가: Flask 애플리케이션 설정
+      - CACHE_REDIS_HOST=redis_container  # Redis 서비스 컨테이너 이름을 호스트로 사용
+      - CACHE_REDIS_PORT=6379
     volumes:
       - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
     depends_on:
       mysql_db:
+        condition: service_healthy
+      redis_container:  # Redis 서비스에 의존
         condition: service_healthy
     networks:
       - my_network
@@ -40,6 +44,20 @@ services:
       retries: 3
     networks:
       - my_network
+
+  redis_container:
+    image: redis:latest
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    networks:
+      - my_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
 
 volumes:
   mysql_data:  # 데이터 영속성을 위한 볼륨 선언

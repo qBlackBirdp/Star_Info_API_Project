@@ -2,11 +2,10 @@
 
 from datetime import datetime, timedelta
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지
-
-# 캐시 딕셔너리 추가 (위도, 경도, 날짜 조합에 대해 오프셋을 저장)
-utc_offset_cache = {}
+from app import cache  # Flask-Caching 객체 import
 
 
+@cache.memoize(timeout=43200)  # 12시간 캐싱
 def get_cached_utc_offset(latitude, longitude, timestamp):
     """
     캐시에서 UTC 오프셋을 가져오는 함수. 없으면 새로 계산.
@@ -19,10 +18,8 @@ def get_cached_utc_offset(latitude, longitude, timestamp):
     Returns:
         tuple: (offset_sec, timezone_id)
     """
-    cache_key = (latitude, longitude, timestamp)
-
-    if cache_key in utc_offset_cache:
-        return utc_offset_cache[cache_key]
+    latitude = round(latitude, 2)
+    longitude = round(longitude, 2)
 
     # 타임존 정보 요청
     timezone_info = get_timezone_info(latitude, longitude, timestamp)
@@ -31,9 +28,6 @@ def get_cached_utc_offset(latitude, longitude, timestamp):
 
     offset_sec = timezone_info['rawOffset'] + timezone_info.get('dstOffset', 0)
     timezone_id = timezone_info['timeZoneId']
-
-    # 캐시에 저장
-    utc_offset_cache[cache_key] = (offset_sec, timezone_id)
 
     return offset_sec, timezone_id
 

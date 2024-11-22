@@ -6,8 +6,10 @@ from skyfield import almanac
 from app.global_resources import ts, planets  # 전역 리소스 임포트
 from .timezone_conversion_service import convert_utc_to_local_time, get_cached_utc_offset  # 시간 변환 함수 import 상대경로 유지.
 from .get_timezone_info import get_timezone_info  # 타임존 정보 가져오는 함수 import 상대경로 유지.
+from app import cache
 
 
+@cache.memoize(timeout=3600)
 def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date, offset_sec=None, timezone_id=None):
     """
     주어진 위치(위도, 경도)와 날짜 범위에 대한 일출 및 일몰 시간을 계산하는 함수 (현지 시간 기준)
@@ -23,6 +25,10 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
     Returns:
         list: 일출 및 일몰 시간이 포함된 딕셔너리 리스트 (현지 시간 기준)
     """
+
+    latitude = round(latitude, 4)
+    longitude = round(longitude, 4)
+
     location = Topos(latitude * N, longitude * E)
     result_list = []
 
@@ -75,6 +81,7 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
     return result_list
 
 
+@cache.memoize(timeout=300)
 def get_single_day_sunrise_sunset(latitude, longitude, date):
     """
     주어진 날짜에 대한 일출 및 일몰 데이터를 추출하는 함수

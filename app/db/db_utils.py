@@ -2,7 +2,9 @@
 
 import logging
 import time
+from contextlib import contextmanager
 from sqlalchemy.exc import OperationalError
+from app.db.session_manager import Session
 
 
 def retry_query(session, query, retries=3, delay=5):
@@ -28,3 +30,16 @@ def retry_query(session, query, retries=3, delay=5):
             else:
                 logging.error(f"All retries failed for query: {e}")
                 return None
+
+
+@contextmanager
+def get_session():
+    """
+    Flask 애플리케이션 컨텍스트에서 데이터베이스 세션을 안전하게 가져오는 컨텍스트 매니저
+    """
+    if not Session:
+        raise RuntimeError("Session is not initialized. Ensure the application context is active.")
+    try:
+        yield Session
+    finally:
+        Session.remove()  # 세션 정리
