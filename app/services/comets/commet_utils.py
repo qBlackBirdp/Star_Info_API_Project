@@ -22,15 +22,15 @@ def parse_ra_dec(ra_str, dec_str):
 def calculate_altitude_azimuth(ra_str, dec_str, delta, latitude, longitude, elevation, approach_time):
     # 적경(RA)과 적위(Dec)를 문자열에서 변환
     ra_hours, dec_degrees = parse_ra_dec(ra_str, dec_str)
-    print(f"Converted RA (hours): {ra_hours}, Converted Dec (degrees): {dec_degrees}")
+    # print(f"Converted RA (hours): {ra_hours}, Converted Dec (degrees): {dec_degrees}")
 
     # 관측자의 위치 설정 (고도 포함)
     observer_location = Topos(latitude_degrees=latitude, longitude_degrees=longitude, elevation_m=elevation)
-    print(f"Observer Location: {observer_location}")
+    # print(f"Observer Location: {observer_location}")
 
     # 혜성의 적경(RA), 적위(Dec)를 Star 객체로 변환
     comet_position = Star(ra_hours=ra_hours, dec_degrees=dec_degrees)
-    print(f"Comet Position (Star): {comet_position}")
+    # print(f"Comet Position (Star): {comet_position}")
 
     # 지구와 관측자 위치를 설정해 관측 시점 설정
     observer = earth + observer_location

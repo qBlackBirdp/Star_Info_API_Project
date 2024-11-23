@@ -52,26 +52,26 @@ METEOR_SHOWERS = {
     "Halley": [
         {
             "name": "Eta Aquariid",
-            "peak_period": ["04-20", "05-10"],  # 매년 4월 20일부터 5월 10일까지 극대기
-            "annual": True  # 매년 규칙적으로 발생
+            "peak_period": ["05-02", "05-06"],  # 극대기 날짜를 4일로 확장
+            "annual": True
         },
         {
             "name": "Orionid",
-            "peak_period": ["10-02", "11-07"],  # 매년 10월 2일부터 11월 7일까지 극대기
-            "annual": True  # 매년 규칙적으로 발생
+            "peak_period": ["10-19", "10-23"],  # 극대기 중심으로 4일로 확장
+            "annual": True
         }
     ],
     "Tuttle": [
         {
             "name": "Ursid",
-            "peak_period": ["12-17", "12-26"],  # 매년 12월 17일부터 12월 26일까지 극대기
+            "peak_period": ["12-21", "12-24"],  # 피크 기간을 4일로 확장
             "annual": True
         }
     ],
     "Swift-Tuttle": [
         {
             "name": "Perseid",
-            "peak_period": ["08-10", "08-15"],  # 매년 8월 10일부터 8월 15일까지 극대기
+            "peak_period": ["08-11", "08-14"],  # 극대기 4일로 확장
             "annual": True
         }
     ]
