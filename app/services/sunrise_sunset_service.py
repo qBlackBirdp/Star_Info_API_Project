@@ -24,7 +24,7 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
         try:
             timezone_timestamp = int(start_date.timestamp())
             offset_sec, timezone_id = get_cached_utc_offset(latitude, longitude, timezone_timestamp)
-            print(f"[DEBUG] Timezone offset_sec: {offset_sec}, timezone_id: {timezone_id}")
+            # print(f"[DEBUG] Timezone offset_sec: {offset_sec}, timezone_id: {timezone_id}")
         except Exception as e:
             print(f"[ERROR] Failed to fetch timezone info: {e}")
             return {"error": f"타임존 정보를 가져오는 데 실패했습니다: {str(e)}"}
@@ -32,7 +32,7 @@ def calculate_sunrise_sunset_for_range(latitude, longitude, start_date, end_date
     # 날짜 범위 내에서 일출 및 일몰 계산
     current_date = start_date
     while current_date <= end_date:
-        print(f"[DEBUG] Calculating for date: {current_date}")
+        # print(f"[DEBUG] Calculating for date: {current_date}")
         t0 = ts.utc(current_date.year, current_date.month, current_date.day - 1, 0, 0, 0)
         t1 = ts.utc(current_date.year, current_date.month, current_date.day + 1, 23, 59, 59)
 

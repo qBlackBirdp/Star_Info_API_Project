@@ -85,7 +85,7 @@ def get_constellations():
     try:
         # 별자리 정보 계산 (날짜 범위에 대해 한 번만 호출)
         constellation_data = get_constellations_for_date_range(latitude, longitude, start_date, end_date)
-        print(f"Constellation Data after range calculation: {constellation_data}")
+        # print(f"Constellation Data after range calculation: {constellation_data}")
 
         # 각 별자리에 대해 가시성이 가장 좋은 시간대 계산
         constellation_data = calculate_visibility_for_constellations_parallel(constellation_data, latitude, longitude)

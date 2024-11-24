@@ -6,7 +6,7 @@ import faulthandler
 import os
 from flask_cors import CORS  # Flask-CORS import 추가
 
-print("Google Time Zone API Key:", os.getenv('GOOGLE_TIMEZONE_API_KEY'))
+# print("Google Time Zone API Key:", os.getenv('GOOGLE_TIMEZONE_API_KEY'))
 
 faulthandler.enable()  # 메모리 검사 도구
 

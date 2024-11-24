@@ -30,14 +30,14 @@ def get_timezone_info(lat, lon, timestamp):
         'key': api_key
     }
     # 로그 추가 - API 요청 시 로그 남기기
-    print(f"Requesting Google Time Zone API for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
-    print(f"Request parameters: {json.dumps(params)}")
+    # print(f"Requesting Google Time Zone API for lat: {lat}, lon: {lon}, timestamp: {timestamp}")
+    # print(f"Request parameters: {json.dumps(params)}")
 
     response = requests.get(base_url, params=params)
 
     # 로그 추가 - 응답 상태 코드와 내용 기록
-    print(f"Response status code: {response.status_code}")
-    print(f"Response content: {response.text}")
+    # print(f"Response status code: {response.status_code}")
+    # print(f"Response content: {response.text}")
 
     if response.status_code == 200:
         return response.json()
