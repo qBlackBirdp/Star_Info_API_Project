@@ -21,6 +21,11 @@ def get_meteor_shower_info(comet_name, start_date, range_days=365):
     Returns:
         list: 유성우 정보 리스트.
     """
+
+    # range_days가 None인 경우 기본값 설정
+    if range_days is None:
+        range_days = 365
+
     if comet_name.lower() == "halley":
         return get_meteor_shower_info_halley(comet_name, start_date, range_days)
 

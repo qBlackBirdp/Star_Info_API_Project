@@ -1,10 +1,8 @@
 # 실행
-import multiprocessing as mp
-import logging
-from app import create_app
 import faulthandler
-import os
+import logging
 from flask_cors import CORS  # Flask-CORS import 추가
+from app import create_app
 
 # print("Google Time Zone API Key:", os.getenv('GOOGLE_TIMEZONE_API_KEY'))
 

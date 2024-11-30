@@ -13,6 +13,10 @@ def get_swift_tuttle_approach_data(start_date, range_days=365):
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         print(f"[DEBUG] Start date object for Swift-Tuttle: {start_date_obj} (Type: {type(start_date_obj)})")
 
+        # range_days가 None인 경우 기본값 설정
+        if range_days is None:
+            range_days = 365
+
         # 혜성 접근 이벤트 데이터 가져오기
         raw_data = get_comet_approach_events('Swift-Tuttle', start_date_obj, range_days)
 

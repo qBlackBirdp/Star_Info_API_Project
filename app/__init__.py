@@ -1,12 +1,12 @@
 # Flask 앱 초기화
 
-from flask import Flask
+from flask import Flask, Blueprint
+from flask_caching import Cache
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
-from app.db.session_manager import Session
-from flask_caching import Cache
 
+from app.db.session_manager import Session
 
 # Flask-SQLAlchemy 초기화
 db = SQLAlchemy()
@@ -24,9 +24,9 @@ def create_app():
     # Flask-Caching 설정
     app.config['CACHE_TYPE'] = 'RedisCache'
     app.config['CACHE_REDIS_HOST'] = 'redis_container'  # Redis 서버 호스트
-    app.config['CACHE_REDIS_PORT'] = 6379         # Redis 서버 포트
-    app.config['CACHE_REDIS_DB'] = 1              # Redis DB 인덱스 (기본: 0)
-    app.config['CACHE_DEFAULT_TIMEOUT'] = 1000     # 캐싱 데이터의 기본 유효 기간 (초)
+    app.config['CACHE_REDIS_PORT'] = 6379               # Redis 서버 포트
+    app.config['CACHE_REDIS_DB'] = 1                    # Redis DB 인덱스 (기본: 0)
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 1000          # 캐싱 데이터의 기본 유효 기간 (초)
 
     # 캐싱 초기화
     cache.init_app(app)
@@ -51,8 +51,8 @@ def create_app():
     with app.app_context():
         Session.configure(bind=db_engine)
 
-    # Blueprint 등록
-    from .routes import main
+    # 기존 API 경로 유지 - Blueprint 등록
+    from app.routes import main
     app.register_blueprint(main)
 
     return app

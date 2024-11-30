@@ -138,11 +138,11 @@ def find_best_peak_date(start_date, end_date, ra, dec, distance, latitude, longi
                     "direction": direction,
                     "score": score  # 점수 저장
                 }
-                print(f"Updated Best Conditions: {best_conditions}")
+                # print(f"Updated Best Conditions: {best_conditions}")
 
         current_date += timedelta(days=1)
 
-    print(f"Best Date and Time: {best_time}, Final Conditions: {best_conditions}")
+    # print(f"Best Date and Time: {best_time}, Final Conditions: {best_conditions}")
     return {"best_date": best_time, "conditions": best_conditions}
 
 
@@ -159,11 +159,11 @@ def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
         meteor_shower_data = get_meteor_shower_data(shower_name, year)
 
         if isinstance(meteor_shower_data, dict) and "error" in meteor_shower_data:
-            print(f"[ERROR] Meteor shower data fetch failed: {meteor_shower_data}")
+            # print(f"[ERROR] Meteor shower data fetch failed: {meteor_shower_data}")
             return meteor_shower_data
 
         if not meteor_shower_data:
-            print(f"[WARNING] No meteor shower data found for name: {shower_name}, year: {year}")
+            # print(f"[WARNING] No meteor shower data found for name: {shower_name}, year: {year}")
             return {"error": "No meteor shower data found for the specified name and year."}
 
         visibility_results = []
@@ -183,15 +183,15 @@ def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
 
             best_date = best_peak["best_date"]
             best_conditions = best_peak["conditions"]
-            print(f"[DEBUG] Best date: {best_date.date()}, Best conditions: {best_conditions}")
+            # print(f"[DEBUG] Best date: {best_date.date()}, Best conditions: {best_conditions}")
 
             # `best_date`가 datetime.date일 경우 변환
             if type(best_date) is datetime.date:
                 best_date = datetime(best_date.year, best_date.month, best_date.day)
 
-            print(f"[DEBUG] Calling get_single_day_sunrise_sunset with date: {best_date}")
+            # print(f"[DEBUG] Calling get_single_day_sunrise_sunset with date: {best_date}")
             sunrise_sunset_info = get_single_day_sunrise_sunset(latitude, longitude, best_date)
-            print(f"[DEBUG] Sunrise/Sunset info: {sunrise_sunset_info}")
+            # print(f"[DEBUG] Sunrise/Sunset info: {sunrise_sunset_info}")
 
             # 가시성 평가 메시지 계산
             visibility_score = best_conditions["score"]
@@ -232,7 +232,8 @@ def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
                     "timeZoneId": sunrise_sunset_info.get("timeZoneId")
                 },
                 "visibility_message": f"Meteor shower is {visibility_rating.lower()}.",
-                "visibility_rating": visibility_rating
+                "visibility_rating": visibility_rating,
+                "comet_approaching": data["status"]
             }
 
             # 가시성 판단
@@ -242,7 +243,7 @@ def evaluate_meteor_shower_visibility(shower_name, year, latitude, longitude):
 
             visibility_results.append(visibility_result)
 
-        print(f"[INFO] Final visibility results: {visibility_results}")
+        # print(f"[INFO] Final visibility results: {visibility_results}")
         return {"visibility_results": visibility_results}
 
     except Exception as e:

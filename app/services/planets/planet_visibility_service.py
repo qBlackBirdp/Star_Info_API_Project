@@ -24,6 +24,10 @@ def calculate_planet_info(planet_name, latitude, longitude, date, range_days=1, 
     location = Topos(latitude, longitude)
 
     # 타임존 정보가 제공되지 않은 경우, sunrise_sunset_data_list에서 가져옴
+    # range_days가 None인 경우 기본값 설정
+    if range_days is None:
+        range_days = 1
+
     if not timezone_info:
         sunrise_sunset_data_list = calculate_sunrise_sunset_for_range(
             latitude, longitude, date, date + timedelta(days=range_days - 1)
