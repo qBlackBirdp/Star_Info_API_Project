@@ -1,7 +1,7 @@
 version: '3.8'
 
 networks:
-  my_network:  # 네트워크 정의
+  my_network:
     driver: bridge
 
 services:
@@ -13,15 +13,18 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
-      - FLASK_APP=run.py  # 추가: Flask 애플리케이션 설정
-      - CACHE_REDIS_HOST=redis_container  # Redis 서비스 컨테이너 이름을 호스트로 사용
+      - FLASK_APP=run.py
+      - CACHE_REDIS_HOST=redis_container
       - CACHE_REDIS_PORT=6379
+      - DB_TYPE=${DB_TYPE}  # DB 타입을 동적으로 설정
     volumes:
-      - ./config.yml:/app/config.yml  # config.yml 파일을 컨테이너에 마운트
+      - ./config.yml:/app/config.yml
     depends_on:
       mysql_db:
         condition: service_healthy
-      redis_container:  # Redis 서비스에 의존
+      postgres_db:  # PostgreSQL도 의존 관계 추가
+        condition: service_healthy
+      redis_container:
         condition: service_healthy
     networks:
       - my_network
@@ -33,11 +36,11 @@ services:
     ports:
       - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "1234"  # 비밀번호는 문자열로 지정
+      MYSQL_ROOT_PASSWORD: "1234"
       MYSQL_DATABASE: STAR_INFO_API_DB
     volumes:
-      - mysql_data:/var/lib/mysql  # 데이터베이스 데이터를 유지하기 위한 볼륨 추가
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d  # 초기화 스크립트 마운트
+      - mysql_data:/var/lib/mysql
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p1234" ]
       interval: 10s
@@ -59,5 +62,24 @@ services:
       retries: 3
     restart: always
 
+  postgres_db:
+    image: postgres:14
+    container_name: postgres_container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: STAR_INFO_API_DB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      retries: 3
+    networks:
+      - my_network
+
 volumes:
-  mysql_data:  # 데이터 영속성을 위한 볼륨 선언
+  mysql_data:
+  postgres_data:
