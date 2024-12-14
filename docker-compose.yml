@@ -16,7 +16,7 @@ services:
       - FLASK_APP=run.py
       - CACHE_REDIS_HOST=redis_container
       - CACHE_REDIS_PORT=6379
-      - DB_TYPE=${DB_TYPE}  # DB 타입을 동적으로 설정
+#      - DB_TYPE=${DB_TYPE}  # DB 타입을 동적으로 설정
     volumes:
       - ./config.yml:/app/config.yml
     depends_on:
@@ -62,24 +62,24 @@ services:
       retries: 3
     restart: always
 
-  postgres_db:
-    image: postgres:14
-    container_name: postgres_container
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "1234"
-      POSTGRES_DB: STAR_INFO_API_DB
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      retries: 3
-    networks:
-      - my_network
+#  postgres_db:
+#    image: postgres:14
+#    container_name: postgres_container
+#    ports:
+#      - "5432:5432"
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: "1234"
+#      POSTGRES_DB: STAR_INFO_API_DB
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+#      interval: 10s
+#      retries: 3
+#    networks:
+#      - my_network
 
 volumes:
   mysql_data:
-  postgres_data:
+#  postgres_data:

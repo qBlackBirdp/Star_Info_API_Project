@@ -12,7 +12,7 @@ from app.routes.moon_phase_routes import moon_phase_blueprint, ns as moon_ns
 from app.routes.planet_routes import planet_blueprint, ns as planet_ns
 from app.routes.sunrise_sunset_routes import sunrise_sunset_blueprint, ns as sunrise_ns
 
-from app.routes.db_test_routes import db_test_ns, db_test_blueprint
+# from app.routes.db_test_routes import db_test_ns, db_test_blueprint
 
 # 메인 Blueprint 생성
 main = Blueprint('main', __name__)
@@ -41,8 +41,8 @@ print(f"Blueprint {planet_blueprint.name} registered with URL prefix '/api/plane
 main.register_blueprint(sunrise_sunset_blueprint, url_prefix='/api/sunrise_sunset')
 print(f"Blueprint {sunrise_sunset_blueprint.name} registered with URL prefix '/api/sunrise_sunset'")
 
-main.register_blueprint(db_test_blueprint, url_prefix='/perform')  # 추가
-print(f"Blueprint {db_test_blueprint.name} registered with URL prefix '/perform'")
+# main.register_blueprint(db_test_blueprint, url_prefix='/perform')  # 추가
+# print(f"Blueprint {db_test_blueprint.name} registered with URL prefix '/perform'")
 
 # 각 네임스페이스를 최종적으로 API 객체에 추가
 api.add_namespace(comet_ns)
@@ -52,6 +52,6 @@ api.add_namespace(moon_ns)
 api.add_namespace(planet_ns)
 api.add_namespace(sunrise_ns)
 
-api.add_namespace(db_test_ns, path='/api/db_test')
+# api.add_namespace(db_test_ns, path='/api/db_test')
 
 __all__ = ["main"]
