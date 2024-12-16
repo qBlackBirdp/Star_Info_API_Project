@@ -392,8 +392,7 @@ Star Info Web API는 천문학 데이터를 기반으로 다양한 정보를 제
     - MySQL 및 Redis의 `healthcheck` 상태를 확인 후 재시작:
         
         ```bash
-        bash
-        코드 복사
+
         docker restart mysql_container redis_container
         
         ```
