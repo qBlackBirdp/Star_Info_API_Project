@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Flask 애플리케이션 생성
     try:
         app = create_app()
-        CORS(app, resources={r"/*": {"origins": "*"}})  # CORS 활성화
+        # CORS(app, resources={r"/*": {"origins": "*"}})  # CORS 활성화
         logger.debug("Flask application created successfully")
     except Exception as e:
         logger.critical(f"Failed to create Flask application: {e}", exc_info=True)

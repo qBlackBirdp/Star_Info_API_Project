@@ -22,8 +22,8 @@ services:
     depends_on:
       mysql_db:
         condition: service_healthy
-      postgres_db:  # PostgreSQL도 의존 관계 추가
-        condition: service_healthy
+#      postgres_db:  # PostgreSQL도 의존 관계 추가
+#        condition: service_healthy
       redis_container:
         condition: service_healthy
     networks:

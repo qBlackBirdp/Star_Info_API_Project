@@ -38,8 +38,9 @@ def create_app():
     # SQLAlchemy 엔진 최적화 설정
     db_engine = create_engine(
         app.config['SQLALCHEMY_DATABASE_URI'],
-        pool_size=10,            # 기본 연결 수
-        max_overflow=20,         # 최대 초과 연결 수
+        pool_size=50,            # 기본 연결 수
+        max_overflow=100,         # 최대 초과 연결 수
+        pool_timeout=60,
         pool_pre_ping=True       # 끊어진 연결 확인
     )
 
